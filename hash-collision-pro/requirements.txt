@@ -1,0 +1,21 @@
+# Hash Collision Analyzer Pro - dependencies
+#
+# This project deliberately has ZERO third-party runtime dependencies.
+# Everything it needs ships with Python 3.8+ (Kali Linux includes it):
+#
+#   hashlib      MD5 / SHA-1 / SHA-256 / SHA-512
+#   argparse     command line interface
+#   dataclasses  typed result containers
+#   statistics   mean / median / stdev for the benchmark
+#   csv, json    report export
+#   random       candidate string generation
+#   time         high-resolution timing (perf_counter)
+#   unittest     the test suite
+#
+# Install nothing:
+#   pip install -r requirements.txt     # succeeds and installs nothing
+#
+# Optional development tools (uncomment if you want to lint the code):
+# flake8>=6.0.0
+# mypy>=1.5.0
+# black>=23.0.0

@@ -1,0 +1,14 @@
+# Force LF line endings in the repository.
+# Without this, committing from Windows can rewrite files with CRLF, which
+# breaks the "#!/usr/bin/env python3" shebang and install.sh on Kali Linux.
+* text=auto eol=lf
+
+*.py text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Never touch binary files.
+*.png binary
+*.jpg binary
+*.pdf binary
