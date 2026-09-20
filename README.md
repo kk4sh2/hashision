@@ -31,24 +31,60 @@ known harmless collision pair supplied to it, which is a read-only check.
 
 ---
 
-## The two versions
+## Three ways in
 
-| | **Simple** | **Advanced** |
-|---|---|---|
-| Folder | [`hash-collision-simple/`](hash-collision-simple/) | [`hash-collision-pro/`](hash-collision-pro/) |
-| Entry point | `hash_collision.py` | `collision_analyzer.py` |
-| Size | 1 file, ~290 lines | 8 modules, ~2,200 lines |
-| Interface | Menu only | 9-subcommand CLI **+** interactive menu |
-| Algorithms | MD5, SHA-256 | MD5, SHA-1, SHA-256, SHA-512 |
-| Files | — | Chunked hashing, file comparison |
-| Statistics | Attempts, time | min / max / average / median / stdev + theory ratio |
-| Reports | — | JSON, CSV, TXT |
-| Tests | — | 48 unit tests |
-| Best for | Learning and explaining the concept | Project demo, portfolio, presentation |
+| | **Simple** | **Advanced** | **Dashboard** |
+|---|---|---|---|
+| Folder | [`hash-collision-simple/`](hash-collision-simple/) | [`hash-collision-pro/`](hash-collision-pro/) | [`hash-collision-web/`](hash-collision-web/) |
+| Entry point | `hash_collision.py` | `collision_analyzer.py` | `index.html` |
+| Size | 1 file, ~290 lines | 8 modules, ~2,200 lines | 1 file, no dependencies |
+| Interface | Terminal menu | 9-subcommand CLI **+** interactive menu | Browser |
+| Algorithms | MD5, SHA-256 | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
+| Files | — | Chunked hashing, file comparison | — |
+| Statistics | Attempts, time | min / max / average / median / stdev + theory ratio | Attempts vs birthday bound |
+| Reports | — | JSON, CSV, TXT | — |
+| Tests | — | 48 unit tests | 9 MD5 test vectors verified |
+| Best for | Learning and explaining the concept | Project demo, portfolio, presentation | Showing someone, live |
 
-Both implement the **same** core experiment: generate random strings, truncate
-their digests to *n* bits, store `truncated → input` in a dictionary, and stop
-when a value repeats with a *different* input.
+All three implement the **same** core experiment: generate random strings,
+truncate their digests to *n* bits, store `truncated → input` in a dictionary,
+and stop when a value repeats with a *different* input.
+
+---
+
+## The dashboard
+
+A single self-contained HTML page — no build step, no server, no libraries.
+Open it in a browser and everything runs locally; nothing is uploaded.
+
+```bash
+cd hash-collision-web
+xdg-open index.html
+```
+
+If your browser blocks the Web Crypto API on `file://` URLs, serve the folder
+instead and open `http://localhost:8000`:
+
+```bash
+python3 -m http.server 8000
+```
+
+Five instruments:
+
+| Tab | What it does |
+|-----|--------------|
+| **Digest** | Type anything, see MD5, SHA-1, SHA-256 and SHA-512 at once, with the first 16 bits highlighted and a truncation table for 8/12/16/20/24 bits |
+| **Compare** | Two texts, two pasted digests, or **verify** that a candidate text produces a digest you were given — with the shared leading bits counted |
+| **Identify** | Paste a digest and it works out which algorithm fits its length, and flags the broken ones |
+| **Collision lab** | Runs the birthday search live in the browser, then shows both inputs, both full digests, and the shared prefix highlighted |
+| **Avalanche** | A 256-cell grid of the digest, one square per bit, copper where the bit flipped |
+
+The avalanche and truncation figures match the Python tools exactly — `hello`
+vs `Hello` gives 125 of 256 bits changed (48.83 %) in both.
+
+MD5 is implemented in the page itself, because the Web Crypto API deliberately
+omits it; that implementation is checked against all nine RFC 1321 test vectors
+plus the 55/56/64-byte padding boundaries.
 
 ---
 

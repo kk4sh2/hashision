@@ -1,0 +1,827 @@
+<title>Hash Collision Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#F4F6F5;
+    --surface:#FFFFFF;
+    --surface-2:#EAEFEE;
+    --ink:#141A19;
+    --muted:#5A6866;
+    --line:#D8E0DE;
+    --line-strong:#B9C6C3;
+    --accent:#0E7C7B;
+    --accent-ink:#0A5B5A;
+    --accent-soft:#DCEDEC;
+    --match:#A8540A;
+    --match-soft:#FAEBD9;
+    --ok:#1A7F55;
+    --crit:#AE1039;
+    --crit-soft:#FBE3E9;
+    --shadow:0 1px 2px rgba(20,26,25,.05), 0 10px 26px -16px rgba(20,26,25,.35);
+
+    --f-sans:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --f-cond:"IBM Plex Sans Condensed", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --f-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0E1413;
+      --surface:#161E1D;
+      --surface-2:#1D2726;
+      --ink:#E3EBE9;
+      --muted:#8DA09D;
+      --line:#293533;
+      --line-strong:#3A4A47;
+      --accent:#41B8B2;
+      --accent-ink:#8AD8D3;
+      --accent-soft:#11302E;
+      --match:#E5A24A;
+      --match-soft:#3A2913;
+      --ok:#4FC08C;
+      --crit:#F4708A;
+      --crit-soft:#3A1520;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0E1413;
+    --surface:#161E1D;
+    --surface-2:#1D2726;
+    --ink:#E3EBE9;
+    --muted:#8DA09D;
+    --line:#293533;
+    --line-strong:#3A4A47;
+    --accent:#41B8B2;
+    --accent-ink:#8AD8D3;
+    --accent-soft:#11302E;
+    --match:#E5A24A;
+    --match-soft:#3A2913;
+    --ok:#4FC08C;
+    --crit:#F4708A;
+    --crit-soft:#3A1520;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 26px -16px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:var(--f-sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
+
+  /* ---------- header ---------- */
+  .masthead{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:6px}
+  h1{
+    font-size:clamp(26px,4.2vw,36px);
+    line-height:1.1;margin:0;font-weight:600;letter-spacing:-.02em;text-wrap:balance;
+  }
+  .tagline{color:var(--muted);margin:6px 0 0;max-width:62ch}
+  .scope{
+    display:flex;gap:10px;align-items:flex-start;
+    margin:18px 0 22px;padding:11px 14px;
+    background:var(--match-soft);
+    border:1px solid color-mix(in srgb, var(--match) 28%, transparent);
+    border-radius:8px;
+    font-size:13.5px;line-height:1.5;
+  }
+  .scope b{color:var(--match)}
+  .scope svg{flex:none;margin-top:2px}
+
+  /* ---------- tabs ---------- */
+  .rail{
+    display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin;
+    border-bottom:1px solid var(--line);margin-bottom:22px;
+  }
+  .rail button{
+    flex:none;appearance:none;background:none;border:0;cursor:pointer;
+    font-family:var(--f-cond);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);padding:11px 14px;border-bottom:2px solid transparent;
+    margin-bottom:-1px;transition:color .15s, border-color .15s;
+  }
+  .rail button:hover{color:var(--ink)}
+  .rail button[aria-selected="true"]{color:var(--accent-ink);border-bottom-color:var(--accent)}
+  .rail button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
+
+  /* ---------- panels ---------- */
+  .panel{display:grid;gap:18px}
+  .lede{color:var(--muted);font-size:14px;margin:-4px 0 0;max-width:68ch}
+
+  .field{display:grid;gap:6px}
+  label,.lbl{
+    font-family:var(--f-cond);font-size:12px;font-weight:600;
+    letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  }
+  input[type=text],textarea,select{
+    width:100%;font-family:var(--f-mono);font-size:14px;
+    color:var(--ink);background:var(--surface);
+    border:1px solid var(--line-strong);border-radius:7px;
+    padding:10px 12px;
+  }
+  textarea{resize:vertical;min-height:62px;line-height:1.5;word-break:break-all}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  select{font-family:var(--f-sans);cursor:pointer}
+
+  .row{display:flex;flex-wrap:wrap;gap:12px}
+  .row>*{flex:1 1 180px;min-width:0}
+
+  button.go{
+    appearance:none;cursor:pointer;font-family:var(--f-sans);font-size:14px;font-weight:600;
+    background:var(--accent);color:#fff;border:0;border-radius:7px;padding:10px 20px;
+    transition:filter .15s;
+  }
+  button.go:hover{filter:brightness(1.08)}
+  button.go:disabled{opacity:.5;cursor:progress}
+  button.go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:7px;overflow:hidden}
+  .seg button{
+    appearance:none;background:var(--surface);border:0;cursor:pointer;
+    font-family:var(--f-cond);font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+    color:var(--muted);padding:8px 13px;
+  }
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+  /* ---------- readouts ---------- */
+  .readout{
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .readout-head{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:baseline;justify-content:space-between;
+    padding:10px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);
+  }
+  .readout-head .lbl{color:var(--ink)}
+  .readout-body{padding:14px;display:grid;gap:14px}
+
+  .digest-row{display:grid;grid-template-columns:104px 1fr;gap:4px 14px;align-items:baseline}
+  @media (max-width:560px){.digest-row{grid-template-columns:1fr}}
+  .algo{font-family:var(--f-cond);font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+  .algo .bits{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em}
+  .hex{font-family:var(--f-mono);font-size:13px;word-break:break-all;line-height:1.6}
+  .hex .pre{background:var(--match-soft);color:var(--match);font-weight:500;border-radius:3px;padding:1px 0}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--f-cond);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  tr:last-child td{border-bottom:0}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono)}
+  .tablewrap{overflow-x:auto}
+
+  .verdict{
+    display:flex;gap:11px;align-items:flex-start;
+    padding:12px 14px;border-radius:8px;font-size:14px;line-height:1.5;
+    border:1px solid transparent;
+  }
+  .verdict .dot{flex:none;width:9px;height:9px;border-radius:50%;margin-top:7px}
+  .verdict strong{display:block}
+  .v-ok{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+  .v-ok .dot{background:var(--ok)}
+  .v-warn{background:var(--match-soft);border-color:color-mix(in srgb,var(--match) 28%,transparent)}
+  .v-warn .dot{background:var(--match)}
+  .v-crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 32%,transparent)}
+  .v-crit .dot{background:var(--crit)}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:1px;background:var(--line)}
+  .stat{background:var(--surface);padding:11px 13px}
+  .stat .k{font-family:var(--f-cond);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-family:var(--f-mono);font-size:19px;font-variant-numeric:tabular-nums;line-height:1.3}
+  .stat .v small{font-size:12px;color:var(--muted)}
+
+  /* bit grid */
+  .bitgrid{display:grid;grid-template-columns:repeat(32,1fr);gap:2px;max-width:100%}
+  .bitgrid i{aspect-ratio:1;border-radius:1.5px;background:var(--surface-2);display:block}
+  .bitgrid i.on{background:var(--match)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
+  .legend span{display:inline-flex;gap:6px;align-items:center}
+  .legend i{width:10px;height:10px;border-radius:2px;display:block}
+
+  .note{font-size:13px;color:var(--muted);line-height:1.55}
+  .note code,code{font-family:var(--f-mono);font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+  .foot{margin-top:38px;padding-top:18px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .foot a{color:var(--accent-ink)}
+  .progress{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="masthead">
+      <div>
+        <h1>Hash Collision Lab</h1>
+        <p class="tagline">Inspect digests, compare them bit by bit, and watch the birthday paradox produce a collision in a deliberately shortened hash.</p>
+      </div>
+    </div>
+    <div class="scope">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.4v4.2M8 11.2v.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div><b>Scope.</b> Collisions here are found in a <b>truncated</b> digest of 8–24 bits. The complete MD5, SHA-1, SHA-256 and SHA-512 hashes stay different, and this page shows you both so you can check. Nothing on this page breaks a real hash function.</div>
+    </div>
+  </header>
+
+  <div class="rail" role="tablist" aria-label="Instruments">
+    <button role="tab" id="tab-digest"   aria-controls="p-digest"   aria-selected="true">Digest</button>
+    <button role="tab" id="tab-compare"  aria-controls="p-compare"  aria-selected="false">Compare</button>
+    <button role="tab" id="tab-identify" aria-controls="p-identify" aria-selected="false">Identify</button>
+    <button role="tab" id="tab-collide"  aria-controls="p-collide"  aria-selected="false">Collision lab</button>
+    <button role="tab" id="tab-avalanche" aria-controls="p-avalanche" aria-selected="false">Avalanche</button>
+  </div>
+
+  <!-- ============ DIGEST ============ -->
+  <section class="panel" id="p-digest" role="tabpanel" aria-labelledby="tab-digest">
+    <p class="lede">Type anything and see all four digests at once. The first 16 bits of each are highlighted — that is the slice the collision lab searches.</p>
+    <div class="field">
+      <label for="d-input">Input text</label>
+      <textarea id="d-input" spellcheck="false" rows="2">hello</textarea>
+    </div>
+    <div class="readout">
+      <div class="readout-head"><span class="lbl">Digests</span><span class="lbl" id="d-len"></span></div>
+      <div class="readout-body" id="d-out"></div>
+    </div>
+    <div class="readout">
+      <div class="readout-head"><span class="lbl">Truncations of SHA-256</span></div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Kept bits</th><th>Prefix</th><th class="num">Search space 2ⁿ</th><th class="num">Birthday bound 2ⁿ′²</th></tr></thead>
+          <tbody id="d-trunc"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section class="panel" id="p-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+    <p class="lede">Compare two texts, two digests you paste in, or verify that a candidate text produces a digest you were given.</p>
+    <div class="seg" role="group" aria-label="Comparison mode">
+      <button id="m-tt" aria-pressed="true">Text vs text</button>
+      <button id="m-hh" aria-pressed="false">Hash vs hash</button>
+      <button id="m-ht" aria-pressed="false">Verify hash</button>
+    </div>
+    <div class="row">
+      <div class="field"><label for="c-a" id="c-a-lbl">First text</label><textarea id="c-a" spellcheck="false" rows="2">hello</textarea></div>
+      <div class="field"><label for="c-b" id="c-b-lbl">Second text</label><textarea id="c-b" spellcheck="false" rows="2">Hello</textarea></div>
+    </div>
+    <div class="field" id="c-algo-field" style="max-width:240px">
+      <label for="c-algo">Algorithm</label>
+      <select id="c-algo"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256" selected>SHA-256</option><option value="sha512">SHA-512</option></select>
+    </div>
+    <div id="c-out"></div>
+  </section>
+
+  <!-- ============ IDENTIFY ============ -->
+  <section class="panel" id="p-identify" role="tabpanel" aria-labelledby="tab-identify" hidden>
+    <p class="lede">Paste a digest and this works out which algorithm could have produced it, from its length and character set.</p>
+    <div class="field">
+      <label for="i-input">Digest</label>
+      <textarea id="i-input" spellcheck="false" rows="2">5d41402abc4b2a76b9719d911017c592</textarea>
+    </div>
+    <div id="i-out"></div>
+  </section>
+
+  <!-- ============ COLLISION LAB ============ -->
+  <section class="panel" id="p-collide" role="tabpanel" aria-labelledby="tab-collide" hidden>
+    <p class="lede">Random strings are hashed and their digests cut down to a few leading bits. Each truncated value goes into a lookup table; the search stops the moment one repeats with a different input.</p>
+    <div class="row">
+      <div class="field"><label for="x-algo">Algorithm</label>
+        <select id="x-algo"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256" selected>SHA-256</option><option value="sha512">SHA-512</option></select>
+      </div>
+      <div class="field"><label for="x-bits">Kept bits</label>
+        <select id="x-bits"><option>8</option><option>12</option><option selected>16</option><option>20</option><option>24</option></select>
+      </div>
+      <div class="field" style="align-self:end;flex:0 0 auto">
+        <button class="go" id="x-run">Run experiment</button>
+      </div>
+    </div>
+    <p class="progress" id="x-prog" aria-live="polite"></p>
+    <div id="x-out"></div>
+  </section>
+
+  <!-- ============ AVALANCHE ============ -->
+  <section class="panel" id="p-avalanche" role="tabpanel" aria-labelledby="tab-avalanche" hidden>
+    <p class="lede">Change one character and watch roughly half the output bits flip. Each square is one bit of the digest; copper means that bit changed.</p>
+    <div class="row">
+      <div class="field"><label for="a-a">Input A</label><textarea id="a-a" spellcheck="false" rows="2">hello</textarea></div>
+      <div class="field"><label for="a-b">Input B</label><textarea id="a-b" spellcheck="false" rows="2">Hello</textarea></div>
+    </div>
+    <div class="field" style="max-width:240px">
+      <label for="a-algo">Algorithm</label>
+      <select id="a-algo"><option value="md5">MD5</option><option value="sha1">SHA-1</option><option value="sha256" selected>SHA-256</option><option value="sha512">SHA-512</option></select>
+    </div>
+    <div id="a-out"></div>
+  </section>
+
+  <p class="foot">Part of the <strong>Hash Collision Analyzer</strong> project — the command-line version adds file hashing, benchmarking over many runs and JSON/CSV/TXT reports. Everything here runs in your browser; nothing is uploaded.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------------- algorithm metadata ---------------- */
+  const ALGOS = {
+    md5:    { name: "MD5",     bits: 128, webcrypto: null,       status: "broken", note: "Practical collisions since 2004. Never use for security." },
+    sha1:   { name: "SHA-1",   bits: 160, webcrypto: "SHA-1",    status: "broken", note: "Publicly broken in 2017 (SHAttered). Deprecated for signatures." },
+    sha256: { name: "SHA-256", bits: 256, webcrypto: "SHA-256",  status: "secure", note: "No practical collision attack known." },
+    sha512: { name: "SHA-512", bits: 512, webcrypto: "SHA-512",  status: "secure", note: "No practical collision attack known." }
+  };
+  const ORDER = ["md5", "sha1", "sha256", "sha512"];
+  const enc = new TextEncoder();
+
+  /* ---------------- MD5 (Web Crypto has no MD5) ---------------- */
+  const MD5_S = [7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,
+                 5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,
+                 4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,
+                 6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  const MD5_K = new Uint32Array(64);
+  for (let i = 0; i < 64; i++) MD5_K[i] = Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296);
+
+  function md5(bytes) {
+    const len = bytes.length;
+    const padded = new Uint8Array(((len + 8) >> 6 << 6) + 64);
+    padded.set(bytes);
+    padded[len] = 0x80;
+    const view = new DataView(padded.buffer);
+    const bitLen = len * 8;
+    view.setUint32(padded.length - 8, bitLen >>> 0, true);
+    view.setUint32(padded.length - 4, Math.floor(bitLen / 4294967296), true);
+
+    let a0 = 0x67452301, b0 = 0xefcdab89, c0 = 0x98badcfe, d0 = 0x10325476;
+    const M = new Uint32Array(16);
+
+    for (let off = 0; off < padded.length; off += 64) {
+      for (let i = 0; i < 16; i++) M[i] = view.getUint32(off + i * 4, true);
+      let A = a0, B = b0, C = c0, D = d0;
+      for (let i = 0; i < 64; i++) {
+        let F, g;
+        if (i < 16)      { F = (B & C) | (~B & D);  g = i; }
+        else if (i < 32) { F = (D & B) | (~D & C);  g = (5 * i + 1) & 15; }
+        else if (i < 48) { F = B ^ C ^ D;           g = (3 * i + 5) & 15; }
+        else             { F = C ^ (B | ~D);        g = (7 * i) & 15; }
+        F = (F + A + MD5_K[i] + M[g]) >>> 0;
+        A = D; D = C; C = B;
+        const s = MD5_S[i];
+        B = (B + ((F << s) | (F >>> (32 - s)))) >>> 0;
+      }
+      a0 = (a0 + A) >>> 0; b0 = (b0 + B) >>> 0;
+      c0 = (c0 + C) >>> 0; d0 = (d0 + D) >>> 0;
+    }
+    const out = new Uint8Array(16);
+    const ov = new DataView(out.buffer);
+    ov.setUint32(0, a0, true); ov.setUint32(4, b0, true);
+    ov.setUint32(8, c0, true); ov.setUint32(12, d0, true);
+    return out;
+  }
+
+  const subtle = (typeof crypto !== "undefined" && crypto.subtle) ? crypto.subtle : null;
+
+  async function digest(algo, bytes) {
+    if (algo === "md5") return md5(bytes);
+    if (!subtle) throw new Error("no-subtle");
+    return new Uint8Array(await subtle.digest(ALGOS[algo].webcrypto, bytes));
+  }
+  const digestText = (algo, text) => digest(algo, enc.encode(text));
+
+  /* ---------------- bit helpers ---------------- */
+  const hex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+
+  // Keep the leading `bits` bits (bits <= 24, so the value fits a JS number safely).
+  function truncate(bytes, bits) {
+    let acc = 0, need = bits, i = 0;
+    while (need > 0) { acc = acc * 256 + bytes[i++]; need -= 8; }
+    return Math.floor(acc / Math.pow(2, -need));
+  }
+  const truncHex = (value, bits) => value.toString(16).toUpperCase().padStart(Math.ceil(bits / 4), "0");
+
+  function hamming(a, b) {
+    let count = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      let x = a[i] ^ b[i];
+      while (x) { count += x & 1; x >>= 1; }
+    }
+    return count;
+  }
+
+  function sharedPrefixBits(a, b) {
+    let n = 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+      if (a[i] === b[i]) { n += 8; continue; }
+      const x = a[i] ^ b[i];
+      for (let bit = 7; bit >= 0; bit--) { if ((x >> bit) & 1) break; n++; }
+      break;
+    }
+    return n;
+  }
+
+  const fmt = (n) => n.toLocaleString("en-US");
+  const el = (id) => document.getElementById(id);
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+
+  // Render a hex digest with its first `bits` bits highlighted.
+  function hexMarked(hexStr, bits) {
+    const chars = Math.ceil(bits / 4);
+    if (!bits || chars >= hexStr.length) return esc(hexStr);
+    return '<span class="pre">' + esc(hexStr.slice(0, chars)) + "</span>" + esc(hexStr.slice(chars));
+  }
+
+  function randomString(length) {
+    const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const raw = new Uint8Array(length);
+    crypto.getRandomValues(raw);
+    let out = "";
+    for (let i = 0; i < length; i++) out += alphabet[raw[i] % alphabet.length];
+    return out;
+  }
+
+  function verdict(kind, title, body) {
+    return '<div class="verdict v-' + kind + '"><span class="dot"></span><div><strong>' +
+      esc(title) + "</strong>" + body + "</div></div>";
+  }
+
+  /* ---------------- tabs ---------------- */
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => select(index));
+    tab.addEventListener("keydown", (event) => {
+      const delta = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (!delta) return;
+      event.preventDefault();
+      const next = (index + delta + tabs.length) % tabs.length;
+      select(next);
+      tabs[next].focus();
+    });
+  });
+  function select(index) {
+    tabs.forEach((tab, i) => {
+      const on = i === index;
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+      el(tab.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+
+  /* ---------------- panel: digest ---------------- */
+  const dInput = el("d-input");
+  async function renderDigest() {
+    const text = dInput.value;
+    el("d-len").textContent = enc.encode(text).length + " bytes in";
+
+    const rows = [];
+    for (const key of ORDER) {
+      const meta = ALGOS[key];
+      let body;
+      try {
+        body = '<div class="hex">' + hexMarked(hex(await digestText(key, text)), 16) + "</div>";
+      } catch (err) {
+        body = '<div class="note">Unavailable — see the note at the bottom of this panel.</div>';
+      }
+      rows.push('<div class="digest-row"><div class="algo">' + meta.name +
+        '<span class="bits">' + meta.bits + " bits</span></div>" + body + "</div>");
+    }
+    if (!subtle) {
+      rows.push('<p class="note">Your browser exposes no Web Crypto API here, so only MD5 (implemented in this page) is available. ' +
+        "Serve the folder over HTTP instead of opening the file directly: <code>python3 -m http.server 8000</code></p>");
+    }
+    el("d-out").innerHTML = rows.join("");
+
+    const sha = await digestText("sha256", text).catch(() => null);
+    el("d-trunc").innerHTML = sha
+      ? [8, 12, 16, 20, 24].map((bits) =>
+          "<tr><td>" + bits + '</td><td class="hex"><span class="pre">' + truncHex(truncate(sha, bits), bits) +
+          '</span></td><td class="num">' + fmt(Math.pow(2, bits)) + '</td><td class="num">' +
+          fmt(Math.round(Math.pow(2, bits / 2))) + "</td></tr>").join("")
+      : "";
+  }
+  dInput.addEventListener("input", renderDigest);
+
+  /* ---------------- panel: compare ---------------- */
+  let mode = "tt";
+  const modeButtons = { tt: el("m-tt"), hh: el("m-hh"), ht: el("m-ht") };
+  const cA = el("c-a"), cB = el("c-b");
+
+  Object.keys(modeButtons).forEach((key) => {
+    modeButtons[key].addEventListener("click", () => {
+      mode = key;
+      Object.keys(modeButtons).forEach((k) => modeButtons[k].setAttribute("aria-pressed", k === key ? "true" : "false"));
+      if (mode === "tt") { el("c-a-lbl").textContent = "First text";  el("c-b-lbl").textContent = "Second text"; cA.value = "hello"; cB.value = "Hello"; }
+      if (mode === "hh") { el("c-a-lbl").textContent = "First digest"; el("c-b-lbl").textContent = "Second digest"; cA.value = "5d41402abc4b2a76b9719d911017c592"; cB.value = "5d41402abc4b2a76b9719d911017c592"; }
+      if (mode === "ht") { el("c-a-lbl").textContent = "Digest you were given"; el("c-b-lbl").textContent = "Candidate text"; cA.value = "5d41402abc4b2a76b9719d911017c592"; cB.value = "hello"; }
+      el("c-algo-field").hidden = mode === "hh";
+      renderCompare();
+    });
+  });
+
+  const HEX_ONLY = /^[0-9a-f]*$/i;
+  const cleanHex = (s) => s.trim().replace(/^0x/i, "").replace(/\s+/g, "");
+
+  function algoFromLength(hexStr) {
+    const found = ORDER.filter((key) => ALGOS[key].bits / 4 === hexStr.length);
+    return found.length ? found[0] : null;
+  }
+
+  async function renderCompare() {
+    const out = el("c-out");
+    const algo = el("c-algo").value;
+
+    try {
+      if (mode === "tt") {
+        const a = await digestText(algo, cA.value);
+        const b = await digestText(algo, cB.value);
+        const same = hex(a) === hex(b);
+        const sameInput = cA.value === cB.value;
+        const shared = sharedPrefixBits(a, b);
+        const diff = hamming(a, b);
+
+        let block;
+        if (same && sameInput) block = verdict("ok", "Identical digests, identical inputs", "<div>Expected. The same input always produces the same digest.</div>");
+        else if (same) block = verdict("crit", "Real collision", "<div>Two different inputs produced the same full " + ALGOS[algo].name + " digest.</div>");
+        else block = verdict("ok", "Digests differ", "<div>As expected for different inputs.</div>");
+
+        out.innerHTML = block + digestPair(hex(a), hex(b), shared) +
+          statBlock([
+            ["Bits differing", diff + " <small>/ " + ALGOS[algo].bits + "</small>"],
+            ["Percentage", (diff / ALGOS[algo].bits * 100).toFixed(2) + "<small>%</small>"],
+            ["Shared leading bits", String(shared)],
+            ["Would collide at", shared >= 8 ? "≤ " + Math.min(shared, 24) + " bits" : "no truncation"]
+          ]);
+        return;
+      }
+
+      if (mode === "hh") {
+        const a = cleanHex(cA.value), b = cleanHex(cB.value);
+        if (!HEX_ONLY.test(a) || !HEX_ONLY.test(b) || !a || !b) {
+          out.innerHTML = verdict("warn", "Not valid hexadecimal", "<div>A digest contains only the characters 0-9 and a-f.</div>");
+          return;
+        }
+        const bytesA = bytesFromHex(a), bytesB = bytesFromHex(b);
+        if (a.length !== b.length) {
+          out.innerHTML = verdict("warn", "Different lengths", "<div>" + a.length * 4 + " bits versus " + b.length * 4 +
+            " bits — these came from different algorithms, so they cannot be compared bit for bit.</div>");
+          return;
+        }
+        const shared = sharedPrefixBits(bytesA, bytesB);
+        const diff = hamming(bytesA, bytesB);
+        const guess = algoFromLength(a);
+        const block = a === b
+          ? verdict("crit", "The digests match", "<div>If the two inputs behind them really were different, this is a genuine collision.</div>")
+          : verdict("ok", "The digests differ", "<div>The inputs behind them were different.</div>");
+        out.innerHTML = block + digestPair(a, b, shared) +
+          statBlock([
+            ["Length", a.length * 4 + " <small>bits</small>"],
+            ["Looks like", guess ? ALGOS[guess].name : "unknown"],
+            ["Bits differing", String(diff)],
+            ["Shared leading bits", String(shared)]
+          ]);
+        return;
+      }
+
+      // verify: hash vs candidate text
+      const given = cleanHex(cA.value);
+      if (!HEX_ONLY.test(given) || !given) {
+        out.innerHTML = verdict("warn", "Not valid hexadecimal", "<div>Paste a digest made of 0-9 and a-f.</div>");
+        return;
+      }
+      const guess = algoFromLength(given);
+      if (!guess) {
+        out.innerHTML = verdict("warn", "Unrecognised digest length",
+          "<div>" + given.length * 4 + " bits does not match MD5, SHA-1, SHA-256 or SHA-512.</div>");
+        return;
+      }
+      const candidate = hex(await digestText(guess, cB.value));
+      const match = candidate.toLowerCase() === given.toLowerCase();
+      out.innerHTML = (match
+        ? verdict("ok", "Match", "<div>Hashing this text with " + ALGOS[guess].name + " reproduces the digest exactly.</div>")
+        : verdict("crit", "No match", "<div>This text does not produce that digest.</div>")) +
+        digestPair(given.toLowerCase(), candidate, sharedPrefixBits(bytesFromHex(given), bytesFromHex(candidate))) +
+        '<p class="note">Checking a guess like this is cheap. Working <em>backwards</em> from the digest to an unknown input is a preimage attack, which costs about 2<sup>' +
+        ALGOS[guess].bits + "</sup> operations — a different and far harder problem than finding a collision.</p>";
+    } catch (err) {
+      out.innerHTML = verdict("warn", "Hashing unavailable",
+        "<div>This browser blocked the Web Crypto API. Serve the folder with <code>python3 -m http.server 8000</code> and open it over HTTP.</div>");
+    }
+  }
+
+  function bytesFromHex(hexStr) {
+    const clean = hexStr.length % 2 ? "0" + hexStr : hexStr;
+    const out = new Uint8Array(clean.length / 2);
+    for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
+    return out;
+  }
+
+  function digestPair(a, b, sharedBits) {
+    const marked = Math.min(sharedBits - (sharedBits % 4), 128);
+    return '<div class="readout"><div class="readout-head"><span class="lbl">Digests</span>' +
+      '<span class="lbl">' + sharedBits + " leading bits shared</span></div>" +
+      '<div class="readout-body">' +
+      '<div class="digest-row"><div class="algo">A</div><div class="hex">' + hexMarked(a, marked) + "</div></div>" +
+      '<div class="digest-row"><div class="algo">B</div><div class="hex">' + hexMarked(b, marked) + "</div></div>" +
+      "</div></div>";
+  }
+
+  function statBlock(pairs) {
+    return '<div class="readout"><div class="stats">' +
+      pairs.map(([k, v]) => '<div class="stat"><div class="k">' + esc(k) + '</div><div class="v">' + v + "</div></div>").join("") +
+      "</div></div>";
+  }
+
+  [cA, cB].forEach((node) => node.addEventListener("input", renderCompare));
+  el("c-algo").addEventListener("change", renderCompare);
+
+  /* ---------------- panel: identify ---------------- */
+  const iInput = el("i-input");
+  function renderIdentify() {
+    const raw = cleanHex(iInput.value);
+    const out = el("i-out");
+    if (!raw) { out.innerHTML = verdict("warn", "Nothing to identify", "<div>Paste a digest above.</div>"); return; }
+    if (!HEX_ONLY.test(raw)) {
+      out.innerHTML = verdict("warn", "Not hexadecimal",
+        "<div>Found characters outside 0-9 and a-f. A hex digest uses only those.</div>");
+      return;
+    }
+    const bits = raw.length * 4;
+    const matches = ORDER.filter((key) => ALGOS[key].bits === bits);
+    const others = { 224: "SHA-224", 384: "SHA-384" }[bits];
+
+    if (!matches.length) {
+      out.innerHTML = verdict("warn", "No match among the four algorithms",
+        "<div>" + raw.length + " hex characters is " + bits + " bits." +
+        (others ? " That is the length of " + others + ", which this page does not implement." : "") + "</div>") +
+        statBlock([["Characters", String(raw.length)], ["Length", bits + " <small>bits</small>"]]);
+      return;
+    }
+    const meta = ALGOS[matches[0]];
+    const kind = meta.status === "broken" ? "warn" : "ok";
+    out.innerHTML =
+      verdict(kind, "Consistent with " + meta.name,
+        "<div>" + bits + " bits, " + raw.length + " hex characters. " + esc(meta.note) + "</div>") +
+      statBlock([
+        ["Algorithm", meta.name],
+        ["Length", bits + " <small>bits</small>"],
+        ["Collision cost", meta.status === "broken" ? "broken" : "2<small>^" + bits / 2 + "</small>"],
+        ["Preimage cost", "2<small>^" + bits + "</small>"]
+      ]) +
+      '<p class="note"><strong>Length is a hint, not proof.</strong> Any 128-bit digest looks like MD5 — MD4 and NTLM hashes are the same length, and a truncated SHA-256 would be too. ' +
+      "The only way to confirm an algorithm is to hash a known input with it and compare, which is what the Verify mode on the Compare tab does.</p>";
+  }
+  iInput.addEventListener("input", renderIdentify);
+
+  /* ---------------- panel: collision lab ---------------- */
+  let running = false;
+  el("x-run").addEventListener("click", runCollision);
+
+  async function runCollision() {
+    if (running) return;
+    running = true;
+    const button = el("x-run");
+    button.disabled = true;
+
+    const algo = el("x-algo").value;
+    const bits = parseInt(el("x-bits").value, 10);
+    const meta = ALGOS[algo];
+    const bound = Math.round(Math.pow(2, bits / 2));
+    const out = el("x-out");
+    const prog = el("x-prog");
+    out.innerHTML = "";
+
+    const seen = new Map();          // truncated value -> { text, digest }
+    const maxAttempts = 2000000;
+    const started = performance.now();
+    let attempts = 0, hit = null;
+
+    try {
+      outer:
+      while (attempts < maxAttempts) {
+        for (let i = 0; i < 300 && attempts < maxAttempts; i++) {
+          attempts++;
+          const text = randomString(8);
+          const bytes = await digest(algo, enc.encode(text));
+          const key = truncate(bytes, bits);
+          const prev = seen.get(key);
+          if (prev) {
+            // The same string twice is not a collision.
+            if (prev.text !== text) { hit = { a: prev, b: { text, digest: bytes }, key }; break outer; }
+          } else {
+            seen.set(key, { text, digest: bytes });
+          }
+        }
+        prog.textContent = "searching… " + fmt(attempts) + " attempts";
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    } catch (err) {
+      prog.textContent = "";
+      out.innerHTML = verdict("warn", "Hashing unavailable",
+        "<div>This browser blocked the Web Crypto API for " + meta.name +
+        ". Serve the folder with <code>python3 -m http.server 8000</code>, or choose MD5, which this page computes itself.</div>");
+      running = false; button.disabled = false;
+      return;
+    }
+
+    const elapsed = (performance.now() - started) / 1000;
+    prog.textContent = "";
+
+    if (!hit) {
+      out.innerHTML = verdict("warn", "No collision found", "<div>Stopped after " + fmt(attempts) + " attempts.</div>");
+      running = false; button.disabled = false;
+      return;
+    }
+
+    const hexA = hex(hit.a.digest), hexB = hex(hit.b.digest);
+    const probability = 1 - Math.exp(-(attempts * (attempts - 1)) / (2 * Math.pow(2, bits)));
+
+    out.innerHTML =
+      verdict("crit", "Collision found in the " + bits + "-bit truncation",
+        "<div>Two different strings share the first " + bits + " bits of their " + meta.name + " digest.</div>") +
+      statBlock([
+        ["Attempts", fmt(attempts)],
+        ["Birthday bound", "~" + fmt(bound)],
+        ["Probability by now", (probability * 100).toFixed(1) + "<small>%</small>"],
+        ["Elapsed", elapsed.toFixed(3) + "<small>s</small>"],
+        ["Search space", "2<small>^" + bits + "</small>"]
+      ]) +
+      '<div class="readout"><div class="readout-head"><span class="lbl">The colliding pair</span>' +
+      '<span class="lbl">shared prefix ' + truncHex(hit.key, bits) + "</span></div>" +
+      '<div class="readout-body">' +
+      '<div class="digest-row"><div class="algo">Input A</div><div class="hex">' + esc(hit.a.text) + "</div></div>" +
+      '<div class="digest-row"><div class="algo">Input B</div><div class="hex">' + esc(hit.b.text) + "</div></div>" +
+      '<div class="digest-row"><div class="algo">Digest A</div><div class="hex">' + hexMarked(hexA, bits) + "</div></div>" +
+      '<div class="digest-row"><div class="algo">Digest B</div><div class="hex">' + hexMarked(hexB, bits) + "</div></div>" +
+      "</div></div>" +
+      verdict("ok", "The full digests are still different",
+        "<div>Only the highlighted " + bits + " bits match; everything after them diverges. Finding a collision in the complete " +
+        meta.bits + "-bit digest would take about 2<sup>" + meta.bits / 2 +
+        "</sup> attempts, which no hardware can do. This experiment shortened the hash on purpose.</div>");
+
+    running = false;
+    button.disabled = false;
+  }
+
+  /* ---------------- panel: avalanche ---------------- */
+  const aA = el("a-a"), aB = el("a-b"), aAlgo = el("a-algo");
+  async function renderAvalanche() {
+    const algo = aAlgo.value, meta = ALGOS[algo];
+    const out = el("a-out");
+    let bytesA, bytesB;
+    try {
+      bytesA = await digestText(algo, aA.value);
+      bytesB = await digestText(algo, aB.value);
+    } catch (err) {
+      out.innerHTML = verdict("warn", "Hashing unavailable",
+        "<div>This browser blocked the Web Crypto API. Serve the folder with <code>python3 -m http.server 8000</code>, or choose MD5.</div>");
+      return;
+    }
+
+    const changed = hamming(bytesA, bytesB);
+    const percentage = changed / meta.bits * 100;
+    const identical = aA.value === aB.value;
+
+    // input bit difference, when both inputs are the same byte length
+    const rawA = enc.encode(aA.value), rawB = enc.encode(aB.value);
+    const inputBits = rawA.length === rawB.length ? hamming(rawA, rawB) : null;
+
+    let cells = "";
+    for (let i = 0; i < meta.bits; i++) {
+      const byte = bytesA[i >> 3] ^ bytesB[i >> 3];
+      const on = (byte >> (7 - (i & 7))) & 1;
+      cells += on ? '<i class="on"></i>' : "<i></i>";
+    }
+
+    out.innerHTML =
+      (identical
+        ? verdict("warn", "Both inputs are identical", "<div>No bits can change. Edit one of them.</div>")
+        : verdict("ok", Math.abs(percentage - 50) <= 10 ? "Strong avalanche" : "Unusual for a single sample",
+            "<div>" + (inputBits !== null ? inputBits + " input bit" + (inputBits === 1 ? "" : "s") + " changed, and " : "") +
+            changed + " of " + meta.bits + " digest bits flipped.</div>")) +
+      statBlock([
+        ["Changed bits", changed + " <small>/ " + meta.bits + "</small>"],
+        ["Percentage", percentage.toFixed(2) + "<small>%</small>"],
+        ["Ideal", "50.00<small>%</small>"],
+        ["Deviation", (percentage - 50 >= 0 ? "+" : "") + (percentage - 50).toFixed(2) + "<small> pts</small>"]
+      ]) +
+      '<div class="readout"><div class="readout-head"><span class="lbl">Digest bits</span>' +
+      '<span class="lbl">' + meta.name + "</span></div><div class=\"readout-body\">" +
+      '<div class="bitgrid">' + cells + "</div>" +
+      '<div class="legend"><span><i style="background:var(--match)"></i> changed</span>' +
+      '<span><i style="background:var(--surface-2)"></i> unchanged</span></div>' +
+      '<div class="digest-row"><div class="algo">Digest A</div><div class="hex">' + esc(hex(bytesA)) + "</div></div>" +
+      '<div class="digest-row"><div class="algo">Digest B</div><div class="hex">' + esc(hex(bytesB)) + "</div></div>" +
+      "</div></div>" +
+      '<p class="note">A cryptographic hash is designed so every output bit flips with probability one half for any change to the input. ' +
+      "Without that property, similar inputs would give similar digests and an attacker could work back toward the input.</p>";
+  }
+  [aA, aB].forEach((node) => node.addEventListener("input", renderAvalanche));
+  aAlgo.addEventListener("change", renderAvalanche);
+
+  /* ---------------- boot ---------------- */
+  renderDigest();
+  renderCompare();
+  renderIdentify();
+  renderAvalanche();
+})();
+</script>
