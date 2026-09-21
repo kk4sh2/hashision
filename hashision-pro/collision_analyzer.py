@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Hash Collision Analyzer Pro - command line interface.
+"""Hashision Pro - command line interface.
 
 An educational cybersecurity tool for demonstrating hash collisions, the
 birthday paradox and the avalanche effect.
@@ -363,7 +363,7 @@ def cmd_algorithms(args: argparse.Namespace) -> int:
 
 MENU = """
 ========================================
-       HASH COLLISION ANALYZER PRO
+       HASHISION PRO
 ========================================
 
 [1] Hash text
@@ -616,7 +616,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog=PROGRAM,
         description=(
-            "Hash Collision Analyzer Pro - an educational tool for hash "
+            "Hashision Pro - an educational tool for hash "
             "collisions, the birthday paradox and the avalanche effect. "
             "Collision experiments use deliberately TRUNCATED digests; full "
             "hash functions are never broken."

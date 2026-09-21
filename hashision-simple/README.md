@@ -1,4 +1,4 @@
-# Simple Hash Collision Tool
+# Hashision Lite
 
 A small, beginner-friendly Python 3 program that demonstrates **hash collisions**
 for a cybersecurity class. One file, no external libraries, ~300 lines including
@@ -49,7 +49,7 @@ sudo apt install python3 -y
 ```
 
 ```bash
-cd hash-collision-simple
+cd hashision-simple
 python3 hash_collision.py
 ```
 
@@ -65,7 +65,7 @@ chmod +x hash_collision.py
 
 ```
 ===============================
- SIMPLE HASH COLLISION TOOL
+ HASHISION LITE
 ===============================
 
 1. Hash text
@@ -275,7 +275,7 @@ mathematical *differential* attacks that find collisions far faster than
 ## 9. Files
 
 ```
-hash-collision-simple/
+hashision-simple/
 ├── hash_collision.py
 └── README.md
 ```

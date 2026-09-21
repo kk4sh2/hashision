@@ -1,15 +1,19 @@
-# Hash Collision Analyzer
+# Hashision
 
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 ![Dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
 ![Platform](https://img.shields.io/badge/platform-Kali%20Linux%20%7C%20Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-Two educational cybersecurity tools that demonstrate **hash collisions**, the
-**birthday paradox** and the **avalanche effect** — the same concepts at two
-very different complexity levels.
+**A hash collision analyzer for MD5, SHA-1, SHA-256 and SHA-512.**
 
-Written in Python 3 with **zero third-party dependencies**.
+Three educational cybersecurity tools that demonstrate **hash collisions**, the
+**birthday paradox** and the **avalanche effect** — the same concepts at three
+very different levels: a single-file version to learn from, a modular
+command-line version to present, and a browser dashboard to show people.
+
+Written in Python 3 with **zero third-party dependencies**, plus one
+self-contained HTML page.
 
 ---
 
@@ -35,7 +39,7 @@ known harmless collision pair supplied to it, which is a read-only check.
 
 | | **Simple** | **Advanced** | **Dashboard** |
 |---|---|---|---|
-| Folder | [`hash-collision-simple/`](hash-collision-simple/) | [`hash-collision-pro/`](hash-collision-pro/) | [`hash-collision-web/`](hash-collision-web/) |
+| Folder | [`hashision-simple/`](hashision-simple/) | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
 | Entry point | `hash_collision.py` | `collision_analyzer.py` | `index.html` |
 | Size | 1 file, ~290 lines | 8 modules, ~2,200 lines | 1 file, no dependencies |
 | Interface | Terminal menu | 9-subcommand CLI **+** interactive menu | Browser |
@@ -58,7 +62,7 @@ A single self-contained HTML page — no build step, no server, no libraries.
 Open it in a browser and everything runs locally; nothing is uploaded.
 
 ```bash
-cd hash-collision-web
+cd hashision-web
 xdg-open index.html
 ```
 
@@ -95,21 +99,21 @@ plus the 55/56/64-byte padding boundaries.
 ```bash
 sudo apt update
 sudo apt install python3 git -y
-git clone https://github.com/kk4sh2/hash-collision-analyzer.git
-cd hash-collision-analyzer
+git clone https://github.com/kk4sh2/hashision.git
+cd hashision
 ```
 
 **Simple version:**
 
 ```bash
-cd hash-collision-simple
+cd hashision-simple
 python3 hash_collision.py
 ```
 
 **Advanced version:**
 
 ```bash
-cd hash-collision-pro
+cd hashision-pro
 chmod +x install.sh
 ./install.sh
 python3 collision_analyzer.py --help
@@ -119,35 +123,35 @@ python3 collision_analyzer.py --help
 
 ## One launcher for everything
 
-`hca` wraps every part of the project so you don't retype long commands.
+`hashision` wraps every part of the project so you don't retype long commands.
 
 ```bash
-chmod +x hca
-./hca help
+chmod +x hashision
+./hashision help
 ```
 
 Put it on your PATH once and it works from any directory:
 
 ```bash
-sudo ln -s "$PWD/hca" /usr/local/bin/hca
+sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 ```
 
 | Command | Does |
 |---------|------|
-| `hca demo` | The full teacher demonstration — six steps, paused between each so you can talk. `--auto` removes the pauses |
-| `hca collision 16` | Collision experiment at 16 bits |
-| `hca bench 20` | 20-run benchmark |
-| `hca avalanche` | Avalanche on `hello` / `Hello` |
-| `hca hash "text"` | Hash some text |
-| `hca file PATH` | Hash a file |
-| `hca compare A B` | Compare two texts |
-| `hca algos` | Algorithm comparison table |
-| `hca report 20` | Benchmark straight to a timestamped JSON report |
-| `hca web` | Serve the dashboard on <http://localhost:8000> |
-| `hca menu` / `hca simple` | Interactive menus for the advanced / beginner tool |
-| `hca install` / `hca test` | Run the installer / the 48 unit tests |
-| `hca clean` | Remove `__pycache__` and generated reports |
-| `hca raw ...` | Pass anything straight through to `collision_analyzer.py` |
+| `hashision demo` | The full teacher demonstration — six steps, paused between each so you can talk. `--auto` removes the pauses |
+| `hashision collision 16` | Collision experiment at 16 bits |
+| `hashision bench 20` | 20-run benchmark |
+| `hashision avalanche` | Avalanche on `hello` / `Hello` |
+| `hashision hash "text"` | Hash some text |
+| `hashision file PATH` | Hash a file |
+| `hashision compare A B` | Compare two texts |
+| `hashision algos` | Algorithm comparison table |
+| `hashision report 20` | Benchmark straight to a timestamped JSON report |
+| `hashision web` | Serve the dashboard on <http://localhost:8000> |
+| `hashision menu` / `hashision simple` | Interactive menus for the advanced / beginner tool |
+| `hashision install` / `hashision test` | Run the installer / the 48 unit tests |
+| `hashision clean` | Remove `__pycache__` and generated reports |
+| `hashision raw ...` | Pass anything straight through to `collision_analyzer.py` |
 
 It finds a working Python 3 itself, so it also runs under Git Bash on Windows
 where `python3` may be a non-functional Microsoft Store stub.
@@ -258,9 +262,9 @@ an MD5 digest can be reversed into a password.
 
 ## Documentation
 
-* [`hash-collision-simple/README.md`](hash-collision-simple/README.md) — code
+* [`hashision-simple/README.md`](hashision-simple/README.md) — code
   walkthrough, theory, and a 3–5 minute demonstration script.
-* [`hash-collision-pro/README.md`](hash-collision-pro/README.md) — full command
+* [`hashision-pro/README.md`](hashision-pro/README.md) — full command
   reference, report format, safety limits, test coverage, and an 8-minute
   technical demonstration script.
 
@@ -269,7 +273,7 @@ an MD5 digest can be reversed into a password.
 ## Tests
 
 ```bash
-cd hash-collision-pro
+cd hashision-pro
 python3 -m unittest discover -s tests -v
 ```
 

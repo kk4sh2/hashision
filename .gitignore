@@ -23,8 +23,8 @@ htmlcov/
 .ruff_cache/
 
 # Generated reports - keep the folder, ignore its contents
-hash-collision-pro/reports/*
-!hash-collision-pro/reports/.gitkeep
+hashision-pro/reports/*
+!hashision-pro/reports/.gitkeep
 
 # Editors
 .vscode/

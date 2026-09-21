@@ -1,4 +1,4 @@
-# Hash Collision Analyzer Pro - dependencies
+# Hashision Pro - dependencies
 #
 # This project deliberately has ZERO third-party runtime dependencies.
 # Everything it needs ships with Python 3.8+ (Kali Linux includes it):

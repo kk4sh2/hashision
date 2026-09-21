@@ -1,4 +1,4 @@
-"""Hash Collision Analyzer Pro - analysis modules.
+"""Hashision Pro - analysis modules.
 
 Public surface of the package::
 
@@ -31,7 +31,7 @@ from .hashing import (
 )
 
 __version__ = "1.0.0"
-__author__ = "Hash Collision Analyzer Pro"
+__author__ = "Hashision Pro"
 
 __all__ = [
     "__version__",

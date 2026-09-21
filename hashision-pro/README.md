@@ -1,4 +1,4 @@
-# Hash Collision Analyzer Pro
+# Hashision Pro
 
 A modular, professional-grade **educational** cybersecurity tool for Kali Linux
 that demonstrates hash collisions, the birthday paradox and the avalanche
@@ -72,7 +72,7 @@ collision pair supplied to it (`compare-files`), which is a read-only check.
 ## 2. Project structure
 
 ```
-hash-collision-pro/
+hashision-pro/
 │
 ├── collision_analyzer.py          CLI entry point and interactive mode
 ├── modules/
@@ -116,7 +116,7 @@ sudo apt install python3 -y
 ```
 
 ```bash
-cd hash-collision-pro
+cd hashision-pro
 chmod +x install.sh
 ./install.sh
 ```
@@ -127,14 +127,14 @@ The installer checks the Python version (3.8+), creates `reports/` and
 Manual route:
 
 ```bash
-cd hash-collision-pro
+cd hashision-pro
 python3 collision_analyzer.py --help
 ```
 
 Optional alias:
 
 ```bash
-echo "alias hca='python3 $PWD/collision_analyzer.py'" >> ~/.bashrc
+echo "alias hashision='python3 $PWD/collision_analyzer.py'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
@@ -287,7 +287,7 @@ python3 collision_analyzer.py interactive
 
 ```
 ========================================
-       HASH COLLISION ANALYZER PRO
+       HASHISION PRO
 ========================================
 
 [1] Hash text
@@ -642,7 +642,7 @@ About 8 minutes. Run from the project directory.
 **Step 0 — the structure (30 s)**
 
 ```bash
-tree hash-collision-pro    # or: ls -R
+tree hashision-pro    # or: ls -R
 ```
 
 > "The project is modular: hashing, collision search, benchmarking, avalanche

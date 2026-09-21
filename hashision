@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 #
-# hca - one launcher for the whole Hash Collision Analyzer project.
+# hashision - one launcher for the whole Hashision project.
 #
-#   ./hca                     show this help
-#   ./hca demo                run the full teacher demonstration, paced
-#   ./hca collision 16        find a 16-bit truncated collision
+#   ./hashision                     show this help
+#   ./hashision demo                run the full teacher demonstration, paced
+#   ./hashision collision 16        find a 16-bit truncated collision
 #
 # Put it on your PATH once and you can call it from anywhere:
-#   sudo ln -s "$PWD/hca" /usr/local/bin/hca
+#   sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 #
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PRO="$HERE/hash-collision-pro"
-SIMPLE="$HERE/hash-collision-simple"
-WEB="$HERE/hash-collision-web"
+PRO="$HERE/hashision-pro"
+SIMPLE="$HERE/hashision-simple"
+WEB="$HERE/hashision-web"
 
 # --- colour -----------------------------------------------------------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
@@ -54,29 +54,29 @@ pause() {
 
 usage() {
   cat <<EOF
-${B}hca${R} - Hash Collision Analyzer
+${B}hashision${R} - Hashision
 
 ${B}Run things${R}
-  ${C}hca demo${R} [--auto]        full teacher demonstration, paced with pauses
-  ${C}hca menu${R}                 advanced tool, interactive menu
-  ${C}hca simple${R}               beginner tool, interactive menu
-  ${C}hca web${R} [port]           serve the browser dashboard (default 8000)
+  ${C}hashision demo${R} [--auto]        full teacher demonstration, paced with pauses
+  ${C}hashision menu${R}                 advanced tool, interactive menu
+  ${C}hashision simple${R}               beginner tool, interactive menu
+  ${C}hashision web${R} [port]           serve the browser dashboard (default 8000)
 
 ${B}One-shot commands${R}
-  ${C}hca hash${R} TEXT [algo]     hash some text            (default sha256)
-  ${C}hca file${R} PATH [algo]     hash a file
-  ${C}hca compare${R} A B [algo]   compare two texts
-  ${C}hca collision${R} [bits]     collision experiment      (default 16)
-  ${C}hca bench${R} [runs] [bits]  benchmark                 (default 20 runs, 16 bits)
-  ${C}hca avalanche${R} [A] [B]    avalanche test            (default hello/Hello)
-  ${C}hca algos${R}                algorithm comparison table
-  ${C}hca report${R} [runs]        benchmark -> reports/report.json
+  ${C}hashision hash${R} TEXT [algo]     hash some text            (default sha256)
+  ${C}hashision file${R} PATH [algo]     hash a file
+  ${C}hashision compare${R} A B [algo]   compare two texts
+  ${C}hashision collision${R} [bits]     collision experiment      (default 16)
+  ${C}hashision bench${R} [runs] [bits]  benchmark                 (default 20 runs, 16 bits)
+  ${C}hashision avalanche${R} [A] [B]    avalanche test            (default hello/Hello)
+  ${C}hashision algos${R}                algorithm comparison table
+  ${C}hashision report${R} [runs]        benchmark -> reports/report.json
 
 ${B}Project${R}
-  ${C}hca install${R}              run the installer
-  ${C}hca test${R}                 run the 48 unit tests
-  ${C}hca clean${R}                remove __pycache__ and generated reports
-  ${C}hca raw${R} ...              pass anything straight to collision_analyzer.py
+  ${C}hashision install${R}              run the installer
+  ${C}hashision test${R}                 run the 48 unit tests
+  ${C}hashision clean${R}                remove __pycache__ and generated reports
+  ${C}hashision raw${R} ...              pass anything straight to collision_analyzer.py
 
 Every collision here is found in a deliberately truncated digest.
 Full MD5/SHA-1/SHA-256/SHA-512 hashes are never broken by this project.
@@ -113,11 +113,11 @@ case "$cmd" in
   menu)       cli interactive ;;
   simple)     ( cd "$SIMPLE" && "$PY" hash_collision.py ) ;;
 
-  hash)       [ $# -ge 1 ] || die "usage: hca hash TEXT [algo]"
+  hash)       [ $# -ge 1 ] || die "usage: hashision hash TEXT [algo]"
               cli hash-text "$1" --algorithm "${2:-sha256}" ;;
-  file)       [ $# -ge 1 ] || die "usage: hca file PATH [algo]"
+  file)       [ $# -ge 1 ] || die "usage: hashision file PATH [algo]"
               cli hash-file "$1" --algorithm "${2:-sha256}" ;;
-  compare)    [ $# -ge 2 ] || die "usage: hca compare A B [algo]"
+  compare)    [ $# -ge 2 ] || die "usage: hashision compare A B [algo]"
               cli compare-text "$1" "$2" --algorithm "${3:-sha256}" ;;
   collision)  cli collision-demo --algorithm "${2:-sha256}" --bits "${1:-16}" ;;
   bench)      cli benchmark --algorithm "${3:-sha256}" --bits "${2:-16}" --runs "${1:-20}" ;;
@@ -152,5 +152,5 @@ case "$cmd" in
 
   raw)        cli "$@" ;;
 
-  *)          die "unknown command: $cmd   (try: hca help)" ;;
+  *)          die "unknown command: $cmd   (try: hashision help)" ;;
 esac

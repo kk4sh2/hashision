@@ -544,7 +544,7 @@ def _write_csv(payload: Dict[str, Any], path: str) -> None:
 def _write_txt(payload: Dict[str, Any], path: str, rendered: Optional[str]) -> None:
     """Write the terminal report (colour stripped) or a key/value dump."""
     buffer = io.StringIO()
-    buffer.write("Hash Collision Analyzer Pro - report\n")
+    buffer.write("Hashision Pro - report\n")
     buffer.write("Generated: {}\n".format(datetime.now().astimezone().isoformat(timespec="seconds")))
     buffer.write("=" * WIDTH + "\n\n")
 

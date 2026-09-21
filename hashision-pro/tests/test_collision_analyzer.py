@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Automated tests for Hash Collision Analyzer Pro.
+"""Automated tests for Hashision Pro.
 
 Run from the project root:
 
@@ -316,7 +316,7 @@ class TestFileHasher(unittest.TestCase):
     """Chunked file hashing and error handling."""
 
     def setUp(self):
-        self.tmp = tempfile.mkdtemp(prefix="hca-test-")
+        self.tmp = tempfile.mkdtemp(prefix="hashision-test-")
         self.file_a = os.path.join(self.tmp, "a.txt")
         self.file_b = os.path.join(self.tmp, "b.txt")
         self.copy_a = os.path.join(self.tmp, "a-copy.txt")
@@ -386,7 +386,7 @@ class TestReporting(unittest.TestCase):
 
     def setUp(self):
         reporting.use_colour(False)
-        self.tmp = tempfile.mkdtemp(prefix="hca-report-")
+        self.tmp = tempfile.mkdtemp(prefix="hashision-report-")
         self.result = benchmark.run_benchmark(
             algorithm="sha256", bits=8, runs=3, seed=2
         )
@@ -456,7 +456,7 @@ class TestCLI(unittest.TestCase):
 
     def setUp(self):
         reporting.use_colour(False)
-        self.tmp = tempfile.mkdtemp(prefix="hca-cli-")
+        self.tmp = tempfile.mkdtemp(prefix="hashision-cli-")
         self.sample = os.path.join(self.tmp, "sample.txt")
         with open(self.sample, "w", encoding="utf-8") as handle:
             handle.write("hello")

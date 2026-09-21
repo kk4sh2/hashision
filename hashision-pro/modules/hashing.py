@@ -1,6 +1,6 @@
 """Core hashing primitives, algorithm metadata and bit-exact truncation.
 
-Every other module in Hash Collision Analyzer Pro builds on this one.
+Every other module in Hashision Pro builds on this one.
 """
 
 from __future__ import annotations

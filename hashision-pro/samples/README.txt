@@ -1,4 +1,4 @@
-Sample files for Hash Collision Analyzer Pro
+Sample files for Hashision Pro
 ============================================
 
 sample1.txt       the five bytes "hello"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Hash Collision Analyzer Pro - installer for Kali Linux / Debian
+# Hashision Pro - installer for Kali Linux / Debian
 #
 # Usage:
 #   chmod +x install.sh
@@ -21,7 +21,7 @@ yellow() { printf '\033[33m%s\033[0m\n' "$1"; }
 red() { printf '\033[31m%s\033[0m\n' "$1"; }
 step() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 
-step "Hash Collision Analyzer Pro - installation"
+step "Hashision Pro - installation"
 echo "Project directory: ${PROJECT_DIR}"
 
 # --------------------------------------------------------------------------
@@ -105,7 +105,7 @@ fi
 # --------------------------------------------------------------------------
 step "Optional launcher"
 echo "To call the tool from anywhere, add an alias to ~/.bashrc or ~/.zshrc:"
-echo "  alias hca='${PYTHON_BIN} ${PROJECT_DIR}/collision_analyzer.py'"
+echo "  alias hashision='${PYTHON_BIN} ${PROJECT_DIR}/collision_analyzer.py'"
 
 step "Installation complete"
 cat <<EOF

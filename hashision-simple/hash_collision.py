@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Simple Hash Collision Tool
+Hashision Lite
 ==========================
 
 An educational program for cybersecurity students.
@@ -297,7 +297,7 @@ def show_menu():
     """Print the main menu."""
     print()
     print("===============================")
-    print(" SIMPLE HASH COLLISION TOOL")
+    print(" HASHISION LITE")
     print("===============================")
     print()
     print("1. Hash text")
