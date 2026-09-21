@@ -117,6 +117,43 @@ python3 collision_analyzer.py --help
 
 ---
 
+## One launcher for everything
+
+`hca` wraps every part of the project so you don't retype long commands.
+
+```bash
+chmod +x hca
+./hca help
+```
+
+Put it on your PATH once and it works from any directory:
+
+```bash
+sudo ln -s "$PWD/hca" /usr/local/bin/hca
+```
+
+| Command | Does |
+|---------|------|
+| `hca demo` | The full teacher demonstration — six steps, paused between each so you can talk. `--auto` removes the pauses |
+| `hca collision 16` | Collision experiment at 16 bits |
+| `hca bench 20` | 20-run benchmark |
+| `hca avalanche` | Avalanche on `hello` / `Hello` |
+| `hca hash "text"` | Hash some text |
+| `hca file PATH` | Hash a file |
+| `hca compare A B` | Compare two texts |
+| `hca algos` | Algorithm comparison table |
+| `hca report 20` | Benchmark straight to a timestamped JSON report |
+| `hca web` | Serve the dashboard on <http://localhost:8000> |
+| `hca menu` / `hca simple` | Interactive menus for the advanced / beginner tool |
+| `hca install` / `hca test` | Run the installer / the 48 unit tests |
+| `hca clean` | Remove `__pycache__` and generated reports |
+| `hca raw ...` | Pass anything straight through to `collision_analyzer.py` |
+
+It finds a working Python 3 itself, so it also runs under Git Bash on Windows
+where `python3` may be a non-functional Microsoft Store stub.
+
+---
+
 ## Advanced version at a glance
 
 ```bash

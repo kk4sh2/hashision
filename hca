@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+#
+# hca - one launcher for the whole Hash Collision Analyzer project.
+#
+#   ./hca                     show this help
+#   ./hca demo                run the full teacher demonstration, paced
+#   ./hca collision 16        find a 16-bit truncated collision
+#
+# Put it on your PATH once and you can call it from anywhere:
+#   sudo ln -s "$PWD/hca" /usr/local/bin/hca
+#
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PRO="$HERE/hash-collision-pro"
+SIMPLE="$HERE/hash-collision-simple"
+WEB="$HERE/hash-collision-web"
+
+# --- colour -----------------------------------------------------------------
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
+  B=$'\033[1m'; C=$'\033[36m'; G=$'\033[32m'; Y=$'\033[33m'; D=$'\033[2m'; R=$'\033[0m'
+else
+  B=''; C=''; G=''; Y=''; D=''; R=''
+fi
+
+step()  { printf '\n%s%s\n%s  %s\n%s%s%s\n\n' "$C" "============================================================" "$B" "$1" "$C" "============================================================" "$R"; }
+note()  { printf '%s%s%s\n' "$D" "$1" "$R"; }
+die()   { printf '%s[x] %s%s\n' "$Y" "$1" "$R" >&2; exit 1; }
+
+# --- python -----------------------------------------------------------------
+# On Windows "python3" can be a Microsoft Store stub: present on PATH but it
+# does not run. So each candidate is actually executed before it is accepted.
+pick_python() {
+  for candidate in ${PYTHON_BIN:-} python3 python py; do
+    command -v "$candidate" >/dev/null 2>&1 || continue
+    if "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+PY="$(pick_python)" || die "No working Python 3 found. Install it with: sudo apt install python3 -y"
+
+cli() { ( cd "$PRO" && "$PY" collision_analyzer.py "$@" ); }
+
+pause() {
+  [ "${AUTO:-0}" = "1" ] && return 0
+  [ -t 0 ] || return 0
+  printf '\n%s-- press Enter for the next step --%s' "$D" "$R"
+  read -r _ || true
+  printf '\n'
+}
+
+usage() {
+  cat <<EOF
+${B}hca${R} - Hash Collision Analyzer
+
+${B}Run things${R}
+  ${C}hca demo${R} [--auto]        full teacher demonstration, paced with pauses
+  ${C}hca menu${R}                 advanced tool, interactive menu
+  ${C}hca simple${R}               beginner tool, interactive menu
+  ${C}hca web${R} [port]           serve the browser dashboard (default 8000)
+
+${B}One-shot commands${R}
+  ${C}hca hash${R} TEXT [algo]     hash some text            (default sha256)
+  ${C}hca file${R} PATH [algo]     hash a file
+  ${C}hca compare${R} A B [algo]   compare two texts
+  ${C}hca collision${R} [bits]     collision experiment      (default 16)
+  ${C}hca bench${R} [runs] [bits]  benchmark                 (default 20 runs, 16 bits)
+  ${C}hca avalanche${R} [A] [B]    avalanche test            (default hello/Hello)
+  ${C}hca algos${R}                algorithm comparison table
+  ${C}hca report${R} [runs]        benchmark -> reports/report.json
+
+${B}Project${R}
+  ${C}hca install${R}              run the installer
+  ${C}hca test${R}                 run the 48 unit tests
+  ${C}hca clean${R}                remove __pycache__ and generated reports
+  ${C}hca raw${R} ...              pass anything straight to collision_analyzer.py
+
+Every collision here is found in a deliberately truncated digest.
+Full MD5/SHA-1/SHA-256/SHA-512 hashes are never broken by this project.
+EOF
+}
+
+cmd="${1:-help}"; shift || true
+
+case "$cmd" in
+  help|-h|--help|"")  usage ;;
+
+  demo)
+    if [ "${1:-}" = "--auto" ]; then AUTO=1; fi
+    step "1/6  HASHING - a fixed-length fingerprint"
+    cli hash-text "cybersecurity" --algorithm sha256
+    pause
+    step "2/6  AVALANCHE - one input bit changes half the output"
+    cli avalanche "cybersecurity" "Cybersecurity" --algorithm sha256
+    pause
+    step "3/6  COLLISION - the birthday paradox on a 16-bit truncation"
+    cli collision-demo --algorithm sha256 --bits 16
+    pause
+    step "4/6  BENCHMARK - theory vs 20 real experiments"
+    cli benchmark --algorithm sha256 --bits 16 --runs 20 --quiet
+    pause
+    step "5/6  ALGORITHMS - what is broken and what is not"
+    cli algorithms
+    pause
+    step "6/6  TESTS - 48 automated checks"
+    ( cd "$PRO" && "$PY" -m unittest discover -s tests -q )
+    printf '\n%s[+] Demonstration complete.%s\n' "$G" "$R"
+    ;;
+
+  menu)       cli interactive ;;
+  simple)     ( cd "$SIMPLE" && "$PY" hash_collision.py ) ;;
+
+  hash)       [ $# -ge 1 ] || die "usage: hca hash TEXT [algo]"
+              cli hash-text "$1" --algorithm "${2:-sha256}" ;;
+  file)       [ $# -ge 1 ] || die "usage: hca file PATH [algo]"
+              cli hash-file "$1" --algorithm "${2:-sha256}" ;;
+  compare)    [ $# -ge 2 ] || die "usage: hca compare A B [algo]"
+              cli compare-text "$1" "$2" --algorithm "${3:-sha256}" ;;
+  collision)  cli collision-demo --algorithm "${2:-sha256}" --bits "${1:-16}" ;;
+  bench)      cli benchmark --algorithm "${3:-sha256}" --bits "${2:-16}" --runs "${1:-20}" ;;
+  avalanche)  cli avalanche "${1:-hello}" "${2:-Hello}" --algorithm "${3:-sha256}" ;;
+  algos)      cli algorithms ;;
+
+  report)
+    out="reports/report-$(date +%Y%m%d-%H%M%S).json"
+    cli benchmark --algorithm sha256 --bits 16 --runs "${1:-20}" --quiet --output "$out"
+    ;;
+
+  web)
+    port="${1:-8000}"
+    printf '%sDashboard: %shttp://localhost:%s%s   (Ctrl+C to stop)\n\n' "$B" "$C" "$port" "$R"
+    command -v xdg-open >/dev/null 2>&1 && (sleep 1 && xdg-open "http://localhost:$port" >/dev/null 2>&1 &) || true
+    ( cd "$WEB" && "$PY" -m http.server "$port" )
+    ;;
+
+  install)
+    [ -f "$PRO/install.sh" ] || die "install.sh not found"
+    chmod +x "$PRO/install.sh"
+    ( cd "$PRO" && ./install.sh )
+    ;;
+
+  test)       ( cd "$PRO" && "$PY" -m unittest discover -s tests -v ) ;;
+
+  clean)
+    find "$HERE" -type d -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null || true
+    find "$PRO/reports" -type f ! -name '.gitkeep' -delete 2>/dev/null || true
+    printf '%s[+] Removed __pycache__ directories and generated reports.%s\n' "$G" "$R"
+    ;;
+
+  raw)        cli "$@" ;;
+
+  *)          die "unknown command: $cmd   (try: hca help)" ;;
+esac
