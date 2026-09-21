@@ -86,8 +86,8 @@ green "samples/sample1.txt, samples/sample2.txt, samples/sample1_copy.txt"
 # 5. Permissions
 # --------------------------------------------------------------------------
 step "Setting permissions"
-chmod +x "${PROJECT_DIR}/collision_analyzer.py"
-green "collision_analyzer.py is executable."
+chmod +x "${PROJECT_DIR}/hashision.py"
+green "hashision.py is executable."
 
 # --------------------------------------------------------------------------
 # 6. Tests
@@ -105,17 +105,17 @@ fi
 # --------------------------------------------------------------------------
 step "Optional launcher"
 echo "To call the tool from anywhere, add an alias to ~/.bashrc or ~/.zshrc:"
-echo "  alias hashision='${PYTHON_BIN} ${PROJECT_DIR}/collision_analyzer.py'"
+echo "  alias hashision='${PYTHON_BIN} ${PROJECT_DIR}/hashision.py'"
 
 step "Installation complete"
 cat <<EOF
 Try it now:
 
-  ${PYTHON_BIN} collision_analyzer.py --help
-  ${PYTHON_BIN} collision_analyzer.py algorithms
-  ${PYTHON_BIN} collision_analyzer.py hash-text "hello" --algorithm md5
-  ${PYTHON_BIN} collision_analyzer.py collision-demo --algorithm sha256 --bits 16
-  ${PYTHON_BIN} collision_analyzer.py interactive
+  ${PYTHON_BIN} hashision.py --help
+  ${PYTHON_BIN} hashision.py algorithms
+  ${PYTHON_BIN} hashision.py hash-text "hello" --algorithm md5
+  ${PYTHON_BIN} hashision.py collision-demo --algorithm sha256 --bits 16
+  ${PYTHON_BIN} hashision.py interactive
 
 Reminder: collision experiments use deliberately TRUNCATED digests.
 Full MD5/SHA-1/SHA-256/SHA-512 hashes are never broken by this tool.

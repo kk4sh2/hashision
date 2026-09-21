@@ -4,7 +4,7 @@
 Run from the project root:
 
     python3 -m unittest discover -s tests -v
-    python3 tests/test_collision_analyzer.py
+    python3 tests/test_hashision.py
 """
 
 from __future__ import annotations
@@ -16,12 +16,12 @@ import sys
 import tempfile
 import unittest
 
-# Allow "python3 tests/test_collision_analyzer.py" as well as unittest discovery.
+# Allow "python3 tests/test_hashision.py" as well as unittest discovery.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import collision_analyzer  # noqa: E402
+import hashision  # noqa: E402
 from modules import avalanche, benchmark, collision, file_hasher, hashing, reporting  # noqa: E402
 
 
@@ -468,7 +468,7 @@ class TestCLI(unittest.TestCase):
 
     def test_every_subcommand_is_wired(self):
         """Each documented subcommand parses and has an implementation."""
-        parser = collision_analyzer.build_parser()
+        parser = hashision.build_parser()
         commands = [
             ["hash-text", "hello"],
             ["hash-file", self.sample],
@@ -486,7 +486,7 @@ class TestCLI(unittest.TestCase):
 
     def test_hash_text_command(self):
         """hash-text runs and exits 0."""
-        code = collision_analyzer.main(
+        code = hashision.main(
             ["--no-color", "hash-text", "hello", "--algorithm", "md5"]
         )
         self.assertEqual(code, 0)
@@ -494,7 +494,7 @@ class TestCLI(unittest.TestCase):
     def test_collision_demo_command(self):
         """collision-demo runs, exits 0 and can write a report."""
         report = os.path.join(self.tmp, "demo.json")
-        code = collision_analyzer.main(
+        code = hashision.main(
             [
                 "--no-color",
                 "collision-demo",
@@ -518,7 +518,7 @@ class TestCLI(unittest.TestCase):
     def test_benchmark_command_with_csv(self):
         """benchmark honours --runs, --quiet and CSV export."""
         report = os.path.join(self.tmp, "bench.csv")
-        code = collision_analyzer.main(
+        code = hashision.main(
             [
                 "--no-color",
                 "benchmark",
@@ -538,7 +538,7 @@ class TestCLI(unittest.TestCase):
 
     def test_avalanche_command(self):
         """avalanche runs against two strings."""
-        code = collision_analyzer.main(
+        code = hashision.main(
             ["--no-color", "avalanche", "hello", "Hello", "--algorithm", "sha256"]
         )
         self.assertEqual(code, 0)
@@ -546,19 +546,19 @@ class TestCLI(unittest.TestCase):
     def test_bad_algorithm_is_rejected_by_argparse(self):
         """argparse rejects an unsupported algorithm with exit code 2."""
         with self.assertRaises(SystemExit) as context:
-            collision_analyzer.main(["hash-text", "hi", "--algorithm", "rot13"])
+            hashision.main(["hash-text", "hi", "--algorithm", "rot13"])
         self.assertEqual(context.exception.code, 2)
 
     def test_missing_file_exits_cleanly(self):
         """A missing file produces exit code 1, not a traceback."""
-        code = collision_analyzer.main(
+        code = hashision.main(
             ["--no-color", "hash-file", os.path.join(self.tmp, "ghost.txt")]
         )
         self.assertEqual(code, 1)
 
     def test_no_command_prints_help(self):
         """Running with no subcommand returns 1."""
-        self.assertEqual(collision_analyzer.main(["--no-color"]), 1)
+        self.assertEqual(hashision.main(["--no-color"]), 1)
 
 
 if __name__ == "__main__":

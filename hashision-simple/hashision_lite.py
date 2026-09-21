@@ -17,7 +17,7 @@ IMPORTANT (honesty note):
   different strings that share those few bits. The full hashes stay
   different. That is enough to demonstrate the idea of a collision.
 
-Run it with:  python3 hash_collision.py
+Run it with:  python3 hashision_lite.py
 """
 
 import hashlib   # gives us md5() and sha256()

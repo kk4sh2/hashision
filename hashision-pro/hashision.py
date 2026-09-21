@@ -12,15 +12,15 @@ different, and the tool says so on every report. Nothing here breaks a real
 hash function, and the tool never generates malicious colliding files.
 
 Examples:
-    python3 collision_analyzer.py hash-text "hello" --algorithm md5
-    python3 collision_analyzer.py hash-file example.txt --algorithm sha256
-    python3 collision_analyzer.py compare-text "hello" "world" --algorithm sha256
-    python3 collision_analyzer.py compare-files a.txt b.txt --algorithm sha256
-    python3 collision_analyzer.py collision-demo --algorithm sha256 --bits 16
-    python3 collision_analyzer.py benchmark --algorithm sha256 --bits 16 --runs 20
-    python3 collision_analyzer.py avalanche "hello" "Hello" --algorithm sha256
-    python3 collision_analyzer.py algorithms
-    python3 collision_analyzer.py interactive
+    python3 hashision.py hash-text "hello" --algorithm md5
+    python3 hashision.py hash-file example.txt --algorithm sha256
+    python3 hashision.py compare-text "hello" "world" --algorithm sha256
+    python3 hashision.py compare-files a.txt b.txt --algorithm sha256
+    python3 hashision.py collision-demo --algorithm sha256 --bits 16
+    python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
+    python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+    python3 hashision.py algorithms
+    python3 hashision.py interactive
 """
 
 from __future__ import annotations
@@ -57,7 +57,7 @@ from modules.hashing import (
 )
 from modules import reporting
 
-PROGRAM = "collision_analyzer.py"
+PROGRAM = "hashision.py"
 DEFAULT_REPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
 
 

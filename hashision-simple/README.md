@@ -50,13 +50,13 @@ sudo apt install python3 -y
 
 ```bash
 cd hashision-simple
-python3 hash_collision.py
+python3 hashision_lite.py
 ```
 
-Optional — make it executable so you can run `./hash_collision.py`:
+Optional — make it executable so you can run `./hashision_lite.py`:
 
 ```bash
-chmod +x hash_collision.py
+chmod +x hashision_lite.py
 ```
 
 ---
@@ -276,7 +276,7 @@ mathematical *differential* attacks that find collisions far faster than
 
 ```
 hashision-simple/
-├── hash_collision.py
+├── hashision_lite.py
 └── README.md
 ```
 

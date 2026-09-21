@@ -42,7 +42,7 @@ pick_python() {
 }
 PY="$(pick_python)" || die "No working Python 3 found. Install it with: sudo apt install python3 -y"
 
-cli() { ( cd "$PRO" && "$PY" collision_analyzer.py "$@" ); }
+cli() { ( cd "$PRO" && "$PY" hashision.py "$@" ); }
 
 pause() {
   [ "${AUTO:-0}" = "1" ] && return 0
@@ -76,7 +76,7 @@ ${B}Project${R}
   ${C}hashision install${R}              run the installer
   ${C}hashision test${R}                 run the 48 unit tests
   ${C}hashision clean${R}                remove __pycache__ and generated reports
-  ${C}hashision raw${R} ...              pass anything straight to collision_analyzer.py
+  ${C}hashision raw${R} ...              pass anything straight to hashision.py
 
 Every collision here is found in a deliberately truncated digest.
 Full MD5/SHA-1/SHA-256/SHA-512 hashes are never broken by this project.
@@ -111,7 +111,7 @@ case "$cmd" in
     ;;
 
   menu)       cli interactive ;;
-  simple)     ( cd "$SIMPLE" && "$PY" hash_collision.py ) ;;
+  simple)     ( cd "$SIMPLE" && "$PY" hashision_lite.py ) ;;
 
   hash)       [ $# -ge 1 ] || die "usage: hashision hash TEXT [algo]"
               cli hash-text "$1" --algorithm "${2:-sha256}" ;;

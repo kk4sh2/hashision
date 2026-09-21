@@ -40,7 +40,7 @@ known harmless collision pair supplied to it, which is a read-only check.
 | | **Simple** | **Advanced** | **Dashboard** |
 |---|---|---|---|
 | Folder | [`hashision-simple/`](hashision-simple/) | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
-| Entry point | `hash_collision.py` | `collision_analyzer.py` | `index.html` |
+| Entry point | `hashision_lite.py` | `hashision.py` | `index.html` |
 | Size | 1 file, ~290 lines | 8 modules, ~2,200 lines | 1 file, no dependencies |
 | Interface | Terminal menu | 9-subcommand CLI **+** interactive menu | Browser |
 | Algorithms | MD5, SHA-256 | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
@@ -107,7 +107,7 @@ cd hashision
 
 ```bash
 cd hashision-simple
-python3 hash_collision.py
+python3 hashision_lite.py
 ```
 
 **Advanced version:**
@@ -116,7 +116,7 @@ python3 hash_collision.py
 cd hashision-pro
 chmod +x install.sh
 ./install.sh
-python3 collision_analyzer.py --help
+python3 hashision.py --help
 ```
 
 ---
@@ -151,7 +151,7 @@ sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 | `hashision menu` / `hashision simple` | Interactive menus for the advanced / beginner tool |
 | `hashision install` / `hashision test` | Run the installer / the 48 unit tests |
 | `hashision clean` | Remove `__pycache__` and generated reports |
-| `hashision raw ...` | Pass anything straight through to `collision_analyzer.py` |
+| `hashision raw ...` | Pass anything straight through to `hashision.py` |
 
 It finds a working Python 3 itself, so it also runs under Git Bash on Windows
 where `python3` may be a non-functional Microsoft Store stub.
@@ -161,15 +161,15 @@ where `python3` may be a non-functional Microsoft Store stub.
 ## Advanced version at a glance
 
 ```bash
-python3 collision_analyzer.py hash-text "hello" --algorithm md5
-python3 collision_analyzer.py hash-file example.txt --algorithm sha256
-python3 collision_analyzer.py compare-text "hello" "world" --algorithm sha256
-python3 collision_analyzer.py compare-files file1.txt file2.txt --algorithm sha256
-python3 collision_analyzer.py collision-demo --algorithm sha256 --bits 16
-python3 collision_analyzer.py benchmark --algorithm sha256 --bits 16 --runs 20
-python3 collision_analyzer.py avalanche "hello" "Hello" --algorithm sha256
-python3 collision_analyzer.py algorithms
-python3 collision_analyzer.py interactive
+python3 hashision.py hash-text "hello" --algorithm md5
+python3 hashision.py hash-file example.txt --algorithm sha256
+python3 hashision.py compare-text "hello" "world" --algorithm sha256
+python3 hashision.py compare-files file1.txt file2.txt --algorithm sha256
+python3 hashision.py collision-demo --algorithm sha256 --bits 16
+python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
+python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+python3 hashision.py algorithms
+python3 hashision.py interactive
 ```
 
 Sample output:
