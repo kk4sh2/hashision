@@ -1,7 +1,7 @@
 # Hashision Lite
 
 A small, beginner-friendly Python 3 program that demonstrates **hash collisions**
-for a cybersecurity class. One file, no external libraries, ~300 lines including
+for a cybersecurity class. One file, no external libraries, ~350 lines including
 comments.
 
 ---

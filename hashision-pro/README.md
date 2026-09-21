@@ -74,7 +74,7 @@ collision pair supplied to it (`compare-files`), which is a read-only check.
 ```
 hashision-pro/
 │
-├── hashision.py          CLI entry point and interactive mode
+├── hashision.py                   CLI entry point and interactive mode
 ├── modules/
 │   ├── __init__.py                package exports and version
 │   ├── hashing.py                 algorithms, digests, bit-exact truncation
@@ -87,7 +87,7 @@ hashision-pro/
 ├── reports/                       generated reports land here
 ├── samples/                       sample files for the file commands
 ├── tests/
-│   └── test_hashision.py 48 unit tests
+│   └── test_hashision.py          48 unit tests
 │
 ├── install.sh
 ├── requirements.txt

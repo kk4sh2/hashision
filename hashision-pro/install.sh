@@ -28,8 +28,19 @@ echo "Project directory: ${PROJECT_DIR}"
 # 1. Check Python 3
 # --------------------------------------------------------------------------
 step "Checking for Python 3"
-if ! command -v "${PYTHON_BIN}" >/dev/null 2>&1; then
-    red "python3 was not found."
+# Being on PATH is not enough: on Windows "python3" can be a Microsoft Store
+# stub that resolves but does not run, so each candidate is executed.
+for candidate in "${PYTHON_BIN}" python3 python py; do
+    if command -v "${candidate}" >/dev/null 2>&1 &&
+       "${candidate}" -c 'import sys; raise SystemExit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then
+        PYTHON_BIN="${candidate}"
+        break
+    fi
+    PYTHON_BIN=""
+done
+
+if [ -z "${PYTHON_BIN}" ]; then
+    red "No working Python 3 was found."
     echo "Install it with:"
     echo "  sudo apt update && sudo apt install python3 -y"
     exit 1

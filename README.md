@@ -24,12 +24,12 @@ These tools **never break a real hash function.**
 Every collision experiment runs against a **deliberately truncated digest**
 (8–32 bits). The two colliding inputs share only the first *n* bits of the
 digest; their complete MD5 / SHA-1 / SHA-256 / SHA-512 hashes remain different,
-and both programs print and verify that fact on every result.
+and all three print and verify that fact on every result.
 
 * ❌ Wrong: "I found a SHA-256 collision."
 * ✅ Right: "I found a collision in a **16-bit truncation** of SHA-256."
 
-Neither tool creates malicious colliding executables, certificates,
+None of them creates malicious colliding executables, certificates,
 authentication tokens or signed documents. The advanced version can *verify* a
 known harmless collision pair supplied to it, which is a read-only check.
 
@@ -41,7 +41,7 @@ known harmless collision pair supplied to it, which is a read-only check.
 |---|---|---|---|
 | Folder | [`hashision-simple/`](hashision-simple/) | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
 | Entry point | `hashision_lite.py` | `hashision.py` | `index.html` |
-| Size | 1 file, ~290 lines | 8 modules, ~2,200 lines | 1 file, no dependencies |
+| Size | 1 file, ~350 lines | 7 modules + CLI, ~2,700 lines | 1 file, ~830 lines |
 | Interface | Terminal menu | 9-subcommand CLI **+** interactive menu | Browser |
 | Algorithms | MD5, SHA-256 | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
 | Files | — | Chunked hashing, file comparison | — |
@@ -235,7 +235,7 @@ Measured over 20 runs at 16 bits: min 122, max 743, average 364.9, median
 ### Correct bit truncation
 
 One hex character is 4 bits, so slicing hex characters only works for multiples
-of 4. Both tools shift the digest integer instead, which is exact for any bit
+of 4. All three shift the digest integer instead, which is exact for any bit
 count:
 
 ```python
