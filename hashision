@@ -11,9 +11,28 @@
 #
 set -euo pipefail
 
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Find the real project folder. When this script is reached through a symlink
+# on PATH (/usr/local/bin/hashision), BASH_SOURCE points at the symlink, not at
+# the repository, so every link in the chain is followed first.
+SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SOURCE" ]; do
+  LINK_DIR="$(cd -P "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  case "$SOURCE" in
+    /*) ;;                      # already absolute
+    *) SOURCE="$LINK_DIR/$SOURCE" ;;
+  esac
+done
+HERE="$(cd -P "$(dirname "$SOURCE")" && pwd)"
 PRO="$HERE/hashision-pro"
 WEB="$HERE/hashision-web"
+
+if [ ! -d "$PRO" ]; then
+  printf 'hashision: cannot find hashision-pro next to %s\n' "$HERE" >&2
+  printf 'Run it from inside the project, or re-create the symlink:\n' >&2
+  printf '  sudo ln -sf "$PWD/hashision" /usr/local/bin/hashision\n' >&2
+  exit 1
+fi
 
 # --- colour -----------------------------------------------------------------
 if [ -t 1 ] && [ -z "${NO_COLOR:-}" ]; then
