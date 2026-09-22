@@ -12,13 +12,13 @@ different, and the tool says so on every report. Nothing here breaks a real
 hash function, and the tool never generates malicious colliding files.
 
 Examples:
-    python3 hashision.py hash-text "hello" --algorithm md5
-    python3 hashision.py hash-file example.txt --algorithm sha256
-    python3 hashision.py compare-text "hello" "world" --algorithm sha256
-    python3 hashision.py compare-files a.txt b.txt --algorithm sha256
-    python3 hashision.py collision-demo --algorithm sha256 --bits 16
-    python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
-    python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+    python3 hashision.py hash-text "hello" md5
+    python3 hashision.py hash-file example.txt sha256
+    python3 hashision.py compare-text "hello" "world" sha256
+    python3 hashision.py compare-files a.txt b.txt sha256
+    python3 hashision.py collision-demo sha256 --bits 16
+    python3 hashision.py benchmark sha256 --bits 16 --runs 20
+    python3 hashision.py avalanche "hello" "Hello" sha256
     python3 hashision.py algorithms
     python3 hashision.py interactive
 """
@@ -41,7 +41,12 @@ from modules.collision import (
     birthday_bound,
     find_collision,
 )
-from modules.file_hasher import FileHashResult, compare_files, hash_file
+from modules.file_hasher import (
+    FileHashResult,
+    compare_files,
+    hash_file,
+    hash_file_multi,
+)
 from modules.hashing import (
     CHUNK_SIZE,
     MAX_TRUNCATION_BITS,
@@ -89,34 +94,52 @@ def _save(
 # ==========================================================================
 
 def cmd_hash_text(args: argparse.Namespace) -> int:
-    """Hash a single string and print the digest."""
-    info = get_algorithm(args.algorithm)
-    digest = digest_text(args.text, args.algorithm)
-    hex_digest = digest.hex()
+    """Hash a string, with every algorithm unless one was named."""
+    algorithm = _resolve_algorithm(args)
+    keys = [algorithm] if algorithm else list(supported_algorithms())
+    raw = args.text.encode("utf-8")
 
     print(reporting.banner("HASH TEXT"))
     print()
-    print("Algorithm: {}".format(info.name))
-    print("Digest size: {} bits ({} hex characters)".format(info.digest_bits, info.hex_length))
     print(reporting.field_block("Input", repr(args.text)))
-    print(reporting.field_block("Input length", "{} bytes (UTF-8)".format(len(args.text.encode("utf-8")))))
-    print(reporting.field_block("Hash", hex_digest))
+    print(reporting.field_block("Input length", "{} bytes (UTF-8)".format(len(raw))))
+
+    hashes: Dict[str, str] = {}
+    truncations: Dict[str, str] = {}
+
+    for key in keys:
+        info = get_algorithm(key)
+        digest = digest_text(args.text, key)
+        hashes[info.name] = digest.hex()
+        print(
+            reporting.field_block(
+                "{}  ({} bits)".format(info.name, info.digest_bits), digest.hex()
+            )
+        )
+        if args.bits:
+            validate_bits(args.bits, key)
+            truncated = format_truncated(truncate_digest(digest, args.bits), args.bits)
+            truncations[info.name] = truncated
+            print(
+                reporting.field_block(
+                    "{} truncated to {} bits".format(info.name, args.bits), truncated
+                )
+            )
 
     payload: Dict[str, Any] = {
         "report_type": "hash_text",
         "date": _timestamp(),
-        "algorithm": info.name,
-        "digest_bits": info.digest_bits,
         "input": args.text,
-        "hash": hex_digest,
+        "input_bytes": len(raw),
+        "hashes": hashes,
     }
-
-    if args.bits:
-        validate_bits(args.bits, args.algorithm)
-        truncated = format_truncated(truncate_digest(digest, args.bits), args.bits)
-        print(reporting.field_block("Truncated to {} bits".format(args.bits), truncated))
+    if len(keys) == 1:
+        # Keep the single-algorithm report shape stable for existing scripts.
+        payload["algorithm"] = get_algorithm(keys[0]).name
+        payload["hash"] = hashes[get_algorithm(keys[0]).name]
+    if truncations:
         payload["truncation_bits"] = args.bits
-        payload["truncated_hash"] = truncated
+        payload["truncated_hashes"] = truncations
 
     _save(payload, args.output, args.format)
     return 0
@@ -141,22 +164,57 @@ def print_file_hash(result: FileHashResult, chunk_size: int) -> None:
 
 
 def cmd_hash_file(args: argparse.Namespace) -> int:
-    """Hash a file by streaming it in chunks."""
-    result = hash_file(args.path, args.algorithm, chunk_size=args.chunk_size)
-    print_file_hash(result, args.chunk_size)
+    """Hash a file, with every algorithm unless one was named.
 
-    payload = result.to_dict()
-    payload["report_type"] = "hash_file"
-    payload["date"] = _timestamp()
+    All four digests come from a single pass over the file, so naming no
+    algorithm costs one read, not four.
+    """
+    algorithm = _resolve_algorithm(args)
+    keys = [algorithm] if algorithm else list(supported_algorithms())
+    results = hash_file_multi(args.path, keys, chunk_size=args.chunk_size)
+    first = next(iter(results.values()))
+
+    print(reporting.banner("HASH FILE"))
+    print()
+    print(reporting.field_block("File", first.path))
+    print(reporting.field_block("Size", "{:,} bytes".format(first.size_bytes)))
+    print(
+        reporting.field_block(
+            "Read strategy",
+            "{:,} chunk(s) of {:,} bytes, one pass for {} algorithm(s)".format(
+                first.chunks_read, args.chunk_size, len(results)
+            ),
+        )
+    )
+    for result in results.values():
+        print(
+            reporting.field_block(
+                "{}  ({} bits)".format(result.algorithm, result.digest_bits),
+                result.hex_digest,
+            )
+        )
+
+    payload: Dict[str, Any] = {
+        "report_type": "hash_file",
+        "date": _timestamp(),
+        "path": first.path,
+        "size_bytes": first.size_bytes,
+        "chunks_read": first.chunks_read,
+        "hashes": {r.algorithm: r.hex_digest for r in results.values()},
+    }
+    if len(results) == 1:
+        payload.update(first.to_dict())
+
     _save(payload, args.output, args.format)
     return 0
 
 
 def cmd_compare_text(args: argparse.Namespace) -> int:
     """Hash two strings and report whether the digests match."""
-    info = get_algorithm(args.algorithm)
-    hash_a = hash_text(args.text_a, args.algorithm)
-    hash_b = hash_text(args.text_b, args.algorithm)
+    algorithm = _resolve_algorithm(args, "sha256")
+    info = get_algorithm(algorithm)
+    hash_a = hash_text(args.text_a, algorithm)
+    hash_b = hash_text(args.text_b, algorithm)
     identical_input = args.text_a == args.text_b
     identical_hash = hash_a == hash_b
 
@@ -186,7 +244,7 @@ def cmd_compare_text(args: argparse.Namespace) -> int:
         verdict = "different"
 
     # Bonus: how close were they? Useful next to the collision demo.
-    changed = avalanche_test(args.text_a, args.text_b, args.algorithm)
+    changed = avalanche_test(args.text_a, args.text_b, algorithm)
     print(
         reporting.field_block(
             "Digest bits that differ",
@@ -217,7 +275,10 @@ def cmd_compare_text(args: argparse.Namespace) -> int:
 def cmd_compare_files(args: argparse.Namespace) -> int:
     """Hash two files and report whether the digests match."""
     comparison = compare_files(
-        args.path_a, args.path_b, args.algorithm, chunk_size=args.chunk_size
+        args.path_a,
+        args.path_b,
+        _resolve_algorithm(args, "sha256"),
+        chunk_size=args.chunk_size,
     )
     rendered = reporting.render_file_comparison(comparison)
     print(rendered)
@@ -231,14 +292,15 @@ def cmd_compare_files(args: argparse.Namespace) -> int:
 
 def cmd_collision_demo(args: argparse.Namespace) -> int:
     """Run one truncated-hash collision experiment."""
-    validate_bits(args.bits, args.algorithm)
+    algorithm = _resolve_algorithm(args, "sha256")
+    validate_bits(args.bits, algorithm)
 
     print(
         reporting.info(
             "Searching for a {}-bit truncated collision in {} "
             "(expected ~{:,} attempts)...".format(
                 args.bits,
-                get_algorithm(args.algorithm).name,
+                get_algorithm(algorithm).name,
                 birthday_bound(args.bits),
             )
         )
@@ -246,7 +308,7 @@ def cmd_collision_demo(args: argparse.Namespace) -> int:
     sys.stdout.flush()
 
     result = find_collision(
-        algorithm=args.algorithm,
+        algorithm=algorithm,
         bits=args.bits,
         max_attempts=args.max_attempts,
         input_length=args.length,
@@ -266,12 +328,13 @@ def cmd_collision_demo(args: argparse.Namespace) -> int:
 
 def cmd_benchmark(args: argparse.Namespace) -> int:
     """Run several experiments and print the statistics."""
-    validate_bits(args.bits, args.algorithm)
+    algorithm = _resolve_algorithm(args, "sha256")
+    validate_bits(args.bits, algorithm)
 
     print(
         reporting.info(
             "Running {} experiment(s) at {} bits with {}...".format(
-                args.runs, args.bits, get_algorithm(args.algorithm).name
+                args.runs, args.bits, get_algorithm(algorithm).name
             )
         )
     )
@@ -292,7 +355,7 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
         sys.stdout.flush()
 
     result = run_benchmark(
-        algorithm=args.algorithm,
+        algorithm=algorithm,
         bits=args.bits,
         runs=args.runs,
         max_attempts=args.max_attempts,
@@ -312,10 +375,11 @@ def cmd_benchmark(args: argparse.Namespace) -> int:
 
 def cmd_avalanche(args: argparse.Namespace) -> int:
     """Measure how many digest bits change between two inputs."""
+    algorithm = _resolve_algorithm(args, "sha256")
     if args.files:
-        result = avalanche_test_files(args.input_a, args.input_b, args.algorithm)
+        result = avalanche_test_files(args.input_a, args.input_b, algorithm)
     else:
-        result = avalanche_test(args.input_a, args.input_b, args.algorithm)
+        result = avalanche_test(args.input_a, args.input_b, algorithm)
 
     rendered = reporting.render_avalanche(result)
     print(rendered)
@@ -425,7 +489,8 @@ def _ask_bits() -> int:
 def _namespace(**kwargs: Any) -> argparse.Namespace:
     """Build an argparse-like namespace for reusing the command functions."""
     defaults: Dict[str, Any] = {
-        "algorithm": "sha256",
+        "algorithm": None,
+        "algorithm_flag": None,
         "output": None,
         "format": None,
         "chunk_size": CHUNK_SIZE,
@@ -596,6 +661,51 @@ def _global_options() -> argparse.ArgumentParser:
     return common
 
 
+def _add_algorithm_args(parser: argparse.ArgumentParser, multi: bool = False) -> None:
+    """Accept the algorithm as a bare word, with the old flag still working.
+
+    ``hashision.py hash-text "hello" md5`` reads better than
+    ``--algorithm md5``, so the algorithm is a positional. The flag is kept so
+    existing commands and scripts do not break.
+
+    Args:
+        parser: The subcommand parser to extend.
+        multi: True when omitting the algorithm means "use every algorithm"
+            rather than "fall back to SHA-256".
+    """
+    algorithms = list(supported_algorithms())
+    parser.add_argument(
+        "algorithm",
+        nargs="?",
+        choices=algorithms,
+        default=None,
+        help=(
+            "Algorithm as a bare word, e.g. md5. Omit to show all four."
+            if multi
+            else "Algorithm as a bare word, e.g. md5 (default: sha256)."
+        ),
+    )
+    parser.add_argument(
+        "-a",
+        "--algorithm",
+        dest="algorithm_flag",
+        choices=algorithms,
+        default=None,
+        help="The same choice as a flag, kept for compatibility.",
+    )
+
+
+def _resolve_algorithm(
+    args: argparse.Namespace, fallback: Optional[str] = None
+) -> Optional[str]:
+    """Return the algorithm the user asked for, positional first, then flag."""
+    return (
+        getattr(args, "algorithm", None)
+        or getattr(args, "algorithm_flag", None)
+        or fallback
+    )
+
+
 def _add_output_options(parser: argparse.ArgumentParser) -> None:
     """Add the shared ``--output`` / ``--format`` options to a subparser."""
     parser.add_argument(
@@ -624,13 +734,13 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "examples:\n"
-            '  %(prog)s hash-text "hello" --algorithm md5\n'
-            "  %(prog)s hash-file example.txt --algorithm sha256\n"
-            '  %(prog)s compare-text "hello" "world" --algorithm sha256\n'
-            "  %(prog)s compare-files file1.txt file2.txt --algorithm sha256\n"
-            "  %(prog)s collision-demo --algorithm sha256 --bits 16\n"
-            "  %(prog)s benchmark --algorithm sha256 --bits 16 --runs 20 -o reports/r.json\n"
-            '  %(prog)s avalanche "hello" "Hello" --algorithm sha256\n'
+            '  %(prog)s hash-text "hello" md5\n'
+            "  %(prog)s hash-file example.txt sha256\n"
+            '  %(prog)s compare-text "hello" "world" sha256\n'
+            "  %(prog)s compare-files file1.txt file2.txt sha256\n"
+            "  %(prog)s collision-demo sha256 --bits 16\n"
+            "  %(prog)s benchmark sha256 --bits 16 --runs 20 -o reports/r.json\n"
+            '  %(prog)s avalanche "hello" "Hello" sha256\n'
             "  %(prog)s algorithms\n"
             "  %(prog)s interactive\n"
         ),
@@ -651,9 +761,7 @@ def build_parser() -> argparse.ArgumentParser:
         "hash-text", help="Hash a string.", parents=[common]
     )
     p_hash_text.add_argument("text", help="Text to hash.")
-    p_hash_text.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_hash_text, multi=True)
     p_hash_text.add_argument(
         "--bits",
         type=int,
@@ -669,9 +777,7 @@ def build_parser() -> argparse.ArgumentParser:
         "hash-file", help="Hash a file (streamed in chunks).", parents=[common]
     )
     p_hash_file.add_argument("path", help="Path to the file.")
-    p_hash_file.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_hash_file, multi=True)
     p_hash_file.add_argument(
         "--chunk-size",
         type=int,
@@ -689,9 +795,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_compare_text.add_argument("text_a", metavar="TEXT_A", help="First text.")
     p_compare_text.add_argument("text_b", metavar="TEXT_B", help="Second text.")
-    p_compare_text.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_compare_text, multi=False)
     _add_output_options(p_compare_text)
     p_compare_text.set_defaults(func=cmd_compare_text)
 
@@ -703,9 +807,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_compare_files.add_argument("path_a", metavar="FILE_A", help="First file.")
     p_compare_files.add_argument("path_b", metavar="FILE_B", help="Second file.")
-    p_compare_files.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_compare_files, multi=False)
     p_compare_files.add_argument(
         "--chunk-size",
         type=int,
@@ -721,9 +823,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Find two strings sharing a truncated digest (birthday attack).",
         parents=[common],
     )
-    p_demo.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_demo, multi=False)
     p_demo.add_argument(
         "--bits",
         type=int,
@@ -758,9 +858,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Repeat the collision experiment and report statistics.",
         parents=[common],
     )
-    p_bench.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_bench, multi=False)
     p_bench.add_argument(
         "--bits", type=int, default=16, help="Truncation size in bits (default: %(default)s)."
     )
@@ -797,9 +895,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_aval.add_argument("input_a", metavar="INPUT_A", help="First text (or file with --files).")
     p_aval.add_argument("input_b", metavar="INPUT_B", help="Second text (or file with --files).")
-    p_aval.add_argument(
-        "-a", "--algorithm", choices=algorithms, default="sha256", help="Hash algorithm."
-    )
+    _add_algorithm_args(p_aval, multi=False)
     p_aval.add_argument(
         "--files", action="store_true", help="Treat the two inputs as file paths."
     )

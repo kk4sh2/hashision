@@ -63,8 +63,8 @@ ${B}Run things${R}
   ${C}hashision web${R} [port]           serve the browser dashboard (default 8000)
 
 ${B}One-shot commands${R}
-  ${C}hashision hash${R} TEXT [algo]     hash some text            (default sha256)
-  ${C}hashision file${R} PATH [algo]     hash a file
+  ${C}hashision hash${R} TEXT [algo]     hash text; no algo = all four
+  ${C}hashision file${R} PATH [algo]     hash a file; no algo = all four, one pass
   ${C}hashision compare${R} A B [algo]   compare two texts
   ${C}hashision collision${R} [bits]     collision experiment      (default 16)
   ${C}hashision bench${R} [runs] [bits]  benchmark                 (default 20 runs, 16 bits)
@@ -74,7 +74,7 @@ ${B}One-shot commands${R}
 
 ${B}Project${R}
   ${C}hashision install${R}              run the installer
-  ${C}hashision test${R}                 run the 48 unit tests
+  ${C}hashision test${R}                 run the 53 unit tests
   ${C}hashision clean${R}                remove __pycache__ and generated reports
   ${C}hashision raw${R} ...              pass anything straight to hashision.py
 
@@ -105,7 +105,7 @@ case "$cmd" in
     step "5/6  ALGORITHMS - what is broken and what is not"
     cli algorithms
     pause
-    step "6/6  TESTS - 48 automated checks"
+    step "6/6  TESTS - 53 automated checks"
     ( cd "$PRO" && "$PY" -m unittest discover -s tests -q )
     printf '\n%s[+] Demonstration complete.%s\n' "$G" "$R"
     ;;
@@ -114,14 +114,14 @@ case "$cmd" in
   simple)     ( cd "$SIMPLE" && "$PY" hashision_lite.py ) ;;
 
   hash)       [ $# -ge 1 ] || die "usage: hashision hash TEXT [algo]"
-              cli hash-text "$1" --algorithm "${2:-sha256}" ;;
+              cli hash-text "$1" ${2:+"$2"} ;;
   file)       [ $# -ge 1 ] || die "usage: hashision file PATH [algo]"
-              cli hash-file "$1" --algorithm "${2:-sha256}" ;;
+              cli hash-file "$1" ${2:+"$2"} ;;
   compare)    [ $# -ge 2 ] || die "usage: hashision compare A B [algo]"
-              cli compare-text "$1" "$2" --algorithm "${3:-sha256}" ;;
-  collision)  cli collision-demo --algorithm "${2:-sha256}" --bits "${1:-16}" ;;
-  bench)      cli benchmark --algorithm "${3:-sha256}" --bits "${2:-16}" --runs "${1:-20}" ;;
-  avalanche)  cli avalanche "${1:-hello}" "${2:-Hello}" --algorithm "${3:-sha256}" ;;
+              cli compare-text "$1" "$2" ${3:+"$3"} ;;
+  collision)  cli collision-demo ${2:+"$2"} --bits "${1:-16}" ;;
+  bench)      cli benchmark ${3:+"$3"} --bits "${2:-16}" --runs "${1:-20}" ;;
+  avalanche)  cli avalanche "${1:-hello}" "${2:-Hello}" ${3:+"$3"} ;;
   algos)      cli algorithms ;;
 
   report)

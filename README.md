@@ -47,7 +47,7 @@ known harmless collision pair supplied to it, which is a read-only check.
 | Files | — | Chunked hashing, file comparison | — |
 | Statistics | Attempts, time | min / max / average / median / stdev + theory ratio | Attempts vs birthday bound |
 | Reports | — | JSON, CSV, TXT | — |
-| Tests | — | 48 unit tests | 9 MD5 test vectors verified |
+| Tests | — | 53 unit tests | 9 MD5 test vectors verified |
 | Best for | Learning and explaining the concept | Project demo, portfolio, presentation | Showing someone, live |
 
 All three implement the **same** core experiment: generate random strings,
@@ -149,7 +149,7 @@ sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 | `hashision report 20` | Benchmark straight to a timestamped JSON report |
 | `hashision web` | Serve the dashboard on <http://localhost:8000> |
 | `hashision menu` / `hashision simple` | Interactive menus for the advanced / beginner tool |
-| `hashision install` / `hashision test` | Run the installer / the 48 unit tests |
+| `hashision install` / `hashision test` | Run the installer / the 53 unit tests |
 | `hashision clean` | Remove `__pycache__` and generated reports |
 | `hashision raw ...` | Pass anything straight through to `hashision.py` |
 
@@ -161,13 +161,13 @@ where `python3` may be a non-functional Microsoft Store stub.
 ## Advanced version at a glance
 
 ```bash
-python3 hashision.py hash-text "hello" --algorithm md5
-python3 hashision.py hash-file example.txt --algorithm sha256
-python3 hashision.py compare-text "hello" "world" --algorithm sha256
-python3 hashision.py compare-files file1.txt file2.txt --algorithm sha256
-python3 hashision.py collision-demo --algorithm sha256 --bits 16
-python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
-python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+python3 hashision.py hash-text "hello" md5
+python3 hashision.py hash-file example.txt sha256
+python3 hashision.py compare-text "hello" "world" sha256
+python3 hashision.py compare-files file1.txt file2.txt sha256
+python3 hashision.py collision-demo sha256 --bits 16
+python3 hashision.py benchmark sha256 --bits 16 --runs 20
+python3 hashision.py avalanche "hello" "Hello" sha256
 python3 hashision.py algorithms
 python3 hashision.py interactive
 ```
@@ -278,7 +278,7 @@ python3 -m unittest discover -s tests -v
 ```
 
 ```
-Ran 48 tests in 0.084s
+Ran 53 tests in 0.110s
 
 OK
 ```

@@ -556,6 +556,63 @@ class TestCLI(unittest.TestCase):
         )
         self.assertEqual(code, 1)
 
+    def test_algorithm_as_a_bare_word(self):
+        """The algorithm can be given positionally, without the flag."""
+        parser = hashision.build_parser()
+        args = parser.parse_args(["hash-text", "hello", "md5"])
+        self.assertEqual(args.algorithm, "md5")
+        self.assertIsNone(args.algorithm_flag)
+        self.assertEqual(hashision._resolve_algorithm(args), "md5")
+
+    def test_algorithm_flag_still_works(self):
+        """The old --algorithm flag is still accepted."""
+        parser = hashision.build_parser()
+        args = parser.parse_args(["hash-text", "hello", "--algorithm", "md5"])
+        self.assertIsNone(args.algorithm)
+        self.assertEqual(args.algorithm_flag, "md5")
+        self.assertEqual(hashision._resolve_algorithm(args), "md5")
+
+    def test_no_algorithm_means_all_of_them(self):
+        """Omitting the algorithm reports every supported digest."""
+        report = os.path.join(self.tmp, "all.json")
+        code = hashision.main(["--no-color", "hash-text", "hello", "--output", report])
+        self.assertEqual(code, 0)
+        with open(report, encoding="utf-8") as handle:
+            payload = json.load(handle)
+        self.assertEqual(
+            sorted(payload["hashes"]), ["MD5", "SHA-1", "SHA-256", "SHA-512"]
+        )
+        self.assertEqual(
+            payload["hashes"]["MD5"], "5d41402abc4b2a76b9719d911017c592"
+        )
+
+    def test_named_algorithm_keeps_the_single_report_shape(self):
+        """Naming one algorithm still writes algorithm and hash keys."""
+        report = os.path.join(self.tmp, "one.json")
+        code = hashision.main(
+            ["--no-color", "hash-text", "hello", "md5", "--output", report]
+        )
+        self.assertEqual(code, 0)
+        with open(report, encoding="utf-8") as handle:
+            payload = json.load(handle)
+        self.assertEqual(payload["algorithm"], "MD5")
+        self.assertEqual(payload["hash"], "5d41402abc4b2a76b9719d911017c592")
+        self.assertEqual(len(payload["hashes"]), 1)
+
+    def test_hash_file_reads_once_for_every_algorithm(self):
+        """All four digests of a file come from a single pass."""
+        results = file_hasher.hash_file_multi(self.sample)
+        self.assertEqual(len(results), 4)
+        chunk_counts = {r.chunks_read for r in results.values()}
+        self.assertEqual(len(chunk_counts), 1)
+        self.assertEqual(
+            results["md5"].hex_digest, "5d41402abc4b2a76b9719d911017c592"
+        )
+        self.assertEqual(
+            results["sha256"].hex_digest,
+            hashing.hash_text("hello", "sha256"),
+        )
+
     def test_no_command_prints_help(self):
         """Running with no subcommand returns 1."""
         self.assertEqual(hashision.main(["--no-color"]), 1)

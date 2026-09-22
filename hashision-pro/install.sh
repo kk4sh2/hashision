@@ -124,8 +124,8 @@ Try it now:
 
   ${PYTHON_BIN} hashision.py --help
   ${PYTHON_BIN} hashision.py algorithms
-  ${PYTHON_BIN} hashision.py hash-text "hello" --algorithm md5
-  ${PYTHON_BIN} hashision.py collision-demo --algorithm sha256 --bits 16
+  ${PYTHON_BIN} hashision.py hash-text "hello" md5
+  ${PYTHON_BIN} hashision.py collision-demo sha256 --bits 16
   ${PYTHON_BIN} hashision.py interactive
 
 Reminder: collision experiments use deliberately TRUNCATED digests.

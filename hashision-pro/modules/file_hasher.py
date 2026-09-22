@@ -7,20 +7,23 @@ image is hashed with the same 64 KiB of RAM as a one-line text file.
 from __future__ import annotations
 
 import os
+from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Sequence
 
 from .hashing import (
     CHUNK_SIZE,
     AnalyzerError,
     get_algorithm,
     new_hasher,
+    supported_algorithms,
 )
 
 __all__ = [
     "FileAccessError",
     "FileHashResult",
     "hash_file",
+    "hash_file_multi",
     "files_have_same_bytes",
     "compare_files",
 ]
@@ -142,6 +145,80 @@ def hash_file(
         size_bytes=read_bytes,
         chunks_read=chunks,
     )
+
+
+def hash_file_multi(
+    path: str,
+    algorithms: Optional[Sequence[str]] = None,
+    chunk_size: int = CHUNK_SIZE,
+    max_bytes: Optional[int] = None,
+) -> "OrderedDict[str, FileHashResult]":
+    """Hash one file with several algorithms in a SINGLE pass over the bytes.
+
+    Hashing a 10 GB file with four algorithms this way reads it once, not four
+    times: every chunk is fed to every hasher before the next chunk is read.
+
+    Args:
+        path: Path to a readable regular file.
+        algorithms: Algorithm keys; defaults to every supported algorithm.
+        chunk_size: Bytes read per iteration.
+        max_bytes: Optional size limit, as in :func:`hash_file`.
+
+    Returns:
+        An ordered mapping of algorithm key to :class:`FileHashResult`.
+
+    Raises:
+        FileAccessError: The path is missing, a directory, unreadable or too big.
+    """
+    keys = list(algorithms) if algorithms else list(supported_algorithms())
+    infos = {key: get_algorithm(key) for key in keys}
+    real_path = _check_path(path)
+
+    if chunk_size < 1:
+        chunk_size = CHUNK_SIZE
+
+    try:
+        size = os.path.getsize(real_path)
+    except OSError as exc:  # pragma: no cover - defensive
+        raise FileAccessError("Cannot stat {}: {}".format(path, exc)) from exc
+
+    if max_bytes is not None and size > max_bytes:
+        raise FileAccessError(
+            "File is {} bytes, which exceeds the configured limit of {} bytes.".format(
+                size, max_bytes
+            )
+        )
+
+    hashers = {key: new_hasher(key) for key in keys}
+    chunks = 0
+    read_bytes = 0
+
+    try:
+        with open(real_path, "rb") as handle:
+            while True:
+                block = handle.read(chunk_size)
+                if not block:
+                    break
+                for hasher in hashers.values():
+                    hasher.update(block)
+                chunks += 1
+                read_bytes += len(block)
+    except PermissionError as exc:
+        raise FileAccessError("Permission denied: {}".format(path)) from exc
+    except OSError as exc:
+        raise FileAccessError("Could not read {}: {}".format(path, exc)) from exc
+
+    results: "OrderedDict[str, FileHashResult]" = OrderedDict()
+    for key in keys:
+        results[key] = FileHashResult(
+            path=path,
+            algorithm=infos[key].name,
+            digest_bits=infos[key].digest_bits,
+            hex_digest=hashers[key].hexdigest(),
+            size_bytes=read_bytes,
+            chunks_read=chunks,
+        )
+    return results
 
 
 def files_have_same_bytes(

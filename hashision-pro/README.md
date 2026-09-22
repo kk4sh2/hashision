@@ -7,7 +7,7 @@ effect across MD5, SHA-1, SHA-256 and SHA-512.
 Pure Python 3 standard library. No third-party dependencies.
 
 ```
-python3 hashision.py collision-demo --algorithm sha256 --bits 16
+python3 hashision.py collision-demo sha256 --bits 16
 ```
 
 ---
@@ -64,7 +64,7 @@ collision pair supplied to it (`compare-files`), which is a read-only check.
 | Avalanche | Changed-bit count, percentage, deviation from the ideal 50 %, optional bit map |
 | Reports | JSON, CSV and TXT export from every command |
 | Interfaces | Full argparse CLI plus a menu-driven interactive mode |
-| Engineering | Type hints, docstrings, dataclasses, 48 unit tests, installer, zero dependencies |
+| Engineering | Type hints, docstrings, dataclasses, 53 unit tests, installer, zero dependencies |
 | Safety | `--max-attempts`, run caps, truncation cap, clean error messages, no tracebacks |
 
 ---
@@ -87,7 +87,7 @@ hashision-pro/
 ├── reports/                       generated reports land here
 ├── samples/                       sample files for the file commands
 ├── tests/
-│   └── test_hashision.py          48 unit tests
+│   └── test_hashision.py          53 unit tests
 │
 ├── install.sh
 ├── requirements.txt
@@ -154,27 +154,27 @@ Global flags (accepted before **or** after the subcommand):
 ### hash-text
 
 ```bash
-python3 hashision.py hash-text "hello" --algorithm md5
-python3 hashision.py hash-text "hello" --algorithm sha256 --bits 16
+python3 hashision.py hash-text "hello" md5
+python3 hashision.py hash-text "hello" sha256 --bits 16
 ```
 
 ### hash-file
 
 ```bash
-python3 hashision.py hash-file samples/sample1.txt --algorithm sha256
-python3 hashision.py hash-file big.iso --algorithm sha512 --chunk-size 1048576
+python3 hashision.py hash-file samples/sample1.txt sha256
+python3 hashision.py hash-file big.iso sha512 --chunk-size 1048576
 ```
 
 ### compare-text
 
 ```bash
-python3 hashision.py compare-text "hello" "world" --algorithm sha256
+python3 hashision.py compare-text "hello" "world" sha256
 ```
 
 ### compare-files
 
 ```bash
-python3 hashision.py compare-files samples/sample1.txt samples/sample2.txt --algorithm sha256
+python3 hashision.py compare-files samples/sample1.txt samples/sample2.txt sha256
 python3 hashision.py compare-files samples/sample1.txt samples/sample1_copy.txt
 ```
 
@@ -185,8 +185,8 @@ different bytes (**a real collision**).
 ### collision-demo
 
 ```bash
-python3 hashision.py collision-demo --algorithm sha256 --bits 16
-python3 hashision.py collision-demo --algorithm md5 --bits 24 --max-attempts 500000
+python3 hashision.py collision-demo sha256 --bits 16
+python3 hashision.py collision-demo md5 --bits 24 --max-attempts 500000
 python3 hashision.py collision-demo --bits 16 --seed 7      # reproducible
 ```
 
@@ -256,15 +256,15 @@ Note the two full digests both start `564c1…` / `564c1…` — the first 16 bi
 ### benchmark
 
 ```bash
-python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
-python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20 --output reports/report.json
+python3 hashision.py benchmark sha256 --bits 16 --runs 20
+python3 hashision.py benchmark sha256 --bits 16 --runs 20 --output reports/report.json
 python3 hashision.py benchmark --bits 20 --runs 50 --quiet --seed 1
 ```
 
 ### avalanche
 
 ```bash
-python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+python3 hashision.py avalanche "hello" "Hello" sha256
 python3 hashision.py avalanche "hello" "Hello" --bitmap
 python3 hashision.py avalanche a.txt b.txt --files --algorithm sha256
 ```
@@ -464,7 +464,7 @@ single run proves nothing on its own.
 ## 10. Avalanche effect
 
 ```bash
-python3 hashision.py avalanche "hello" "Hello" --algorithm sha256
+python3 hashision.py avalanche "hello" "Hello" sha256
 ```
 
 ```
@@ -515,10 +515,10 @@ python3 hashision.py algorithms
 ```
 Algorithm  Output Size  Generic Collision Security  Status  CLI flag
 ------------------------------------------------------------------------------
-MD5        128 bits     Broken                      BROKEN  --algorithm md5
-SHA-1      160 bits     Broken                      BROKEN  --algorithm sha1
-SHA-256    256 bits     ~2^128                      SECURE  --algorithm sha256
-SHA-512    512 bits     ~2^256                      SECURE  --algorithm sha512
+MD5        128 bits     Broken                      BROKEN  md5
+SHA-1      160 bits     Broken                      BROKEN  sha1
+SHA-256    256 bits     ~2^128                      SECURE  sha256
+SHA-512    512 bits     ~2^256                      SECURE  sha512
 ```
 
 * **MD5** (128-bit) — practical collisions since 2004; chosen-prefix collisions
@@ -619,7 +619,7 @@ python3 tests/test_hashision.py
 ```
 
 ```
-Ran 48 tests in 0.084s
+Ran 53 tests in 0.110s
 
 OK
 ```
@@ -652,7 +652,7 @@ tree hashision-pro    # or: ls -R
 **Step 1 — hash text (45 s)**
 
 ```bash
-python3 hashision.py hash-text "cybersecurity" --algorithm sha256
+python3 hashision.py hash-text "cybersecurity" sha256
 ```
 
 > "A hash function maps any input to a fixed-length fingerprint — 256 bits,
@@ -662,7 +662,7 @@ python3 hashision.py hash-text "cybersecurity" --algorithm sha256
 **Step 2 — avalanche (90 s)**
 
 ```bash
-python3 hashision.py avalanche "cybersecurity" "Cybersecurity" --algorithm sha256
+python3 hashision.py avalanche "cybersecurity" "Cybersecurity" sha256
 ```
 
 > "I changed one letter — 'c' to 'C', which is a single bit in ASCII. The tool
@@ -676,7 +676,7 @@ Add `--bitmap` if they want to see which bits moved.
 **Step 3 — collision demo (2 min)**
 
 ```bash
-python3 hashision.py collision-demo --algorithm sha256 --bits 16
+python3 hashision.py collision-demo sha256 --bits 16
 ```
 
 > "Now the core experiment. I compute full SHA-256, then keep only the first
@@ -697,7 +697,7 @@ python3 hashision.py collision-demo --algorithm sha256 --bits 16
 **Step 4 — benchmark (2 min)**
 
 ```bash
-python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
+python3 hashision.py benchmark sha256 --bits 16 --runs 20
 ```
 
 > "One run proves nothing, so this repeats the experiment 20 times and reports
@@ -710,7 +710,7 @@ python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20
 **Step 5 — reports (45 s)**
 
 ```bash
-python3 hashision.py benchmark --algorithm sha256 --bits 16 --runs 20 --output reports/report.json
+python3 hashision.py benchmark sha256 --bits 16 --runs 20 --output reports/report.json
 cat reports/report.json | head -30
 ```
 
@@ -737,7 +737,7 @@ python3 hashision.py algorithms
 python3 -m unittest discover -s tests -q
 ```
 
-> "48 unit tests: known-answer digests, the truncation mathematics including
+> "53 unit tests: known-answer digests, the truncation mathematics including
 > the tricky non-multiple-of-4 case, the birthday formulas, the file error
 > paths, every CLI subcommand — and a test that asserts the two full digests
 > in a collision result are always different, so the tool can never overstate

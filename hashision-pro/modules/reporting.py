@@ -385,12 +385,12 @@ def render_algorithms() -> str:
                 "{} bits".format(algo.digest_bits),
                 algo.collision_security,
                 algo.status,
-                "--algorithm {}".format(key),
+                key,
             ]
         )
     out.append(
         table(
-            ["Algorithm", "Output Size", "Generic Collision Security", "Status", "CLI flag"],
+            ["Algorithm", "Output Size", "Generic Collision Security", "Status", "Type this"],
             rows,
         )
     )
