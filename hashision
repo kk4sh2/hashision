@@ -13,7 +13,6 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PRO="$HERE/hashision-pro"
-SIMPLE="$HERE/hashision-simple"
 WEB="$HERE/hashision-web"
 
 # --- colour -----------------------------------------------------------------
@@ -58,8 +57,7 @@ ${B}hashision${R} - Hashision
 
 ${B}Run things${R}
   ${C}hashision demo${R} [--auto]        full teacher demonstration, paced with pauses
-  ${C}hashision menu${R}                 advanced tool, interactive menu
-  ${C}hashision simple${R}               beginner tool, interactive menu
+  ${C}hashision menu${R}                 interactive menu
   ${C}hashision web${R} [port]           serve the browser dashboard (default 8000)
 
 ${B}One-shot commands${R}
@@ -111,7 +109,6 @@ case "$cmd" in
     ;;
 
   menu)       cli interactive ;;
-  simple)     ( cd "$SIMPLE" && "$PY" hashision_lite.py ) ;;
 
   hash)       [ $# -ge 1 ] || die "usage: hashision hash TEXT [algo]"
               cli hash-text "$1" ${2:+"$2"} ;;

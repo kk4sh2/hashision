@@ -7,10 +7,9 @@
 
 **A hash collision analyzer for MD5, SHA-1, SHA-256 and SHA-512.**
 
-Three educational cybersecurity tools that demonstrate **hash collisions**, the
-**birthday paradox** and the **avalanche effect** — the same concepts at three
-very different levels: a single-file version to learn from, a modular
-command-line version to present, and a browser dashboard to show people.
+Two educational cybersecurity tools that demonstrate **hash collisions**, the
+**birthday paradox** and the **avalanche effect**: a modular command-line
+analyzer, and a browser dashboard that shows the same experiments live.
 
 Written in Python 3 with **zero third-party dependencies**, plus one
 self-contained HTML page.
@@ -19,38 +18,38 @@ self-contained HTML page.
 
 ## ⚠ Honesty statement
 
-These tools **never break a real hash function.**
+Neither tool **breaks a real hash function.**
 
 Every collision experiment runs against a **deliberately truncated digest**
 (8–32 bits). The two colliding inputs share only the first *n* bits of the
 digest; their complete MD5 / SHA-1 / SHA-256 / SHA-512 hashes remain different,
-and all three print and verify that fact on every result.
+and both print and verify that fact on every result.
 
 * ❌ Wrong: "I found a SHA-256 collision."
 * ✅ Right: "I found a collision in a **16-bit truncation** of SHA-256."
 
-None of them creates malicious colliding executables, certificates,
-authentication tokens or signed documents. The advanced version can *verify* a
-known harmless collision pair supplied to it, which is a read-only check.
+Neither creates malicious colliding executables, certificates, authentication
+tokens or signed documents. The command-line tool can *verify* a known harmless
+collision pair supplied to it, which is a read-only check.
 
 ---
 
-## Three ways in
+## Two ways in
 
-| | **Simple** | **Advanced** | **Dashboard** |
-|---|---|---|---|
-| Folder | [`hashision-simple/`](hashision-simple/) | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
-| Entry point | `hashision_lite.py` | `hashision.py` | `index.html` |
-| Size | 1 file, ~350 lines | 7 modules + CLI, ~2,700 lines | 1 file, ~830 lines |
-| Interface | Terminal menu | 9-subcommand CLI **+** interactive menu | Browser |
-| Algorithms | MD5, SHA-256 | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
-| Files | — | Chunked hashing, file comparison | — |
-| Statistics | Attempts, time | min / max / average / median / stdev + theory ratio | Attempts vs birthday bound |
-| Reports | — | JSON, CSV, TXT | — |
-| Tests | — | 53 unit tests | 9 MD5 test vectors verified |
-| Best for | Learning and explaining the concept | Project demo, portfolio, presentation | Showing someone, live |
+| | **Command line** | **Dashboard** |
+|---|---|---|
+| Folder | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
+| Entry point | `hashision.py` | `index.html` |
+| Size | 7 modules + CLI, ~2,700 lines | 1 file, ~830 lines |
+| Interface | 9-subcommand CLI **+** interactive menu | Browser |
+| Algorithms | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
+| Files | Chunked hashing, file comparison | — |
+| Statistics | min / max / average / median / stdev + theory ratio | Attempts vs birthday bound |
+| Reports | JSON, CSV, TXT | — |
+| Tests | 53 unit tests | 9 MD5 test vectors verified |
+| Best for | The project demo and the portfolio | Showing someone, live |
 
-All three implement the **same** core experiment: generate random strings,
+Both implement the **same** core experiment: generate random strings,
 truncate their digests to *n* bits, store `truncated → input` in a dictionary,
 and stop when a value repeats with a *different* input.
 
@@ -103,14 +102,7 @@ git clone https://github.com/kk4sh2/hashision.git
 cd hashision
 ```
 
-**Simple version:**
-
-```bash
-cd hashision-simple
-python3 hashision_lite.py
-```
-
-**Advanced version:**
+Then:
 
 ```bash
 cd hashision-pro
@@ -148,7 +140,7 @@ sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 | `hashision algos` | Algorithm comparison table |
 | `hashision report 20` | Benchmark straight to a timestamped JSON report |
 | `hashision web` | Serve the dashboard on <http://localhost:8000> |
-| `hashision menu` / `hashision simple` | Interactive menus for the advanced / beginner tool |
+| `hashision menu` | The interactive menu |
 | `hashision install` / `hashision test` | Run the installer / the 53 unit tests |
 | `hashision clean` | Remove `__pycache__` and generated reports |
 | `hashision raw ...` | Pass anything straight through to `hashision.py` |
@@ -158,7 +150,7 @@ where `python3` may be a non-functional Microsoft Store stub.
 
 ---
 
-## Advanced version at a glance
+## The command line at a glance
 
 ```bash
 python3 hashision.py hash-text "hello" md5
@@ -235,7 +227,7 @@ Measured over 20 runs at 16 bits: min 122, max 743, average 364.9, median
 ### Correct bit truncation
 
 One hex character is 4 bits, so slicing hex characters only works for multiples
-of 4. All three shift the digest integer instead, which is exact for any bit
+of 4. Both shift the digest integer instead, which is exact for any bit
 count:
 
 ```python
@@ -262,8 +254,6 @@ an MD5 digest can be reversed into a password.
 
 ## Documentation
 
-* [`hashision-simple/README.md`](hashision-simple/README.md) — code
-  walkthrough, theory, and a 3–5 minute demonstration script.
 * [`hashision-pro/README.md`](hashision-pro/README.md) — full command
   reference, report format, safety limits, test coverage, and an 8-minute
   technical demonstration script.
