@@ -618,5 +618,56 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(hashision.main(["--no-color"]), 1)
 
 
+class TestKnownCollision(unittest.TestCase):
+    """The published full-digest collision must actually collide."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.payload = collision.verify_known_collision("md5")
+
+    def test_inputs_really_differ(self):
+        """The two inputs are different data of the same length."""
+        known = collision.KNOWN_COLLISIONS["md5"]
+        self.assertNotEqual(known.block_a, known.block_b)
+        self.assertEqual(len(known.block_a), len(known.block_b))
+        self.assertEqual(self.payload["differing_bytes"], 6)
+
+    def test_md5_digests_are_identical(self):
+        """Every character of the MD5 digest matches - a real collision."""
+        md5 = self.payload["digests"]["MD5"]
+        self.assertEqual(md5["hash_a"], md5["hash_b"])
+        self.assertEqual(md5["hash_a"], "79054025255fb1a26e4bc422aef54eb4")
+        self.assertTrue(md5["collides"])
+        self.assertTrue(self.payload["is_full_hash_collision"])
+
+    def test_the_stronger_algorithms_do_not_collide(self):
+        """The same pair leaves SHA-1, SHA-256 and SHA-512 unaffected."""
+        for name in ("SHA-1", "SHA-256", "SHA-512"):
+            entry = self.payload["digests"][name]
+            self.assertNotEqual(entry["hash_a"], entry["hash_b"], name)
+            self.assertFalse(entry["collides"], name)
+
+    def test_unknown_key_is_rejected(self):
+        """Asking for a collision that is not bundled raises cleanly."""
+        with self.assertRaises(hashing.InvalidParameterError):
+            collision.verify_known_collision("sha256")
+
+    def test_command_runs_and_reports(self):
+        """The CLI command exits 0 and its report records the collision."""
+        reporting.use_colour(False)
+        tmp = tempfile.mkdtemp(prefix="hca-known-")
+        report = os.path.join(tmp, "known.json")
+        try:
+            code = hashision.main(["--no-color", "known-collision", "--output", report])
+            self.assertEqual(code, 0)
+            with open(report, encoding="utf-8") as handle:
+                payload = json.load(handle)
+            self.assertTrue(payload["digests"]["MD5"]["collides"])
+        finally:
+            for name in os.listdir(tmp):
+                os.remove(os.path.join(tmp, name))
+            os.rmdir(tmp)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

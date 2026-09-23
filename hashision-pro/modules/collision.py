@@ -11,13 +11,15 @@ import random
 import string
 import time
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from .hashing import (
     InvalidParameterError,
+    digest_bytes,
     digest_text,
     format_truncated,
     get_algorithm,
+    supported_algorithms,
     truncate_digest,
     validate_bits,
 )
@@ -34,6 +36,9 @@ __all__ = [
     "collision_probability",
     "generate_random_string",
     "find_collision",
+    "KnownCollision",
+    "KNOWN_COLLISIONS",
+    "verify_known_collision",
 ]
 
 #: Default ceiling for one search. Keeps an experiment interactive.
@@ -282,3 +287,107 @@ def find_collision(
         birthday_bound=birthday_bound(bits),
         birthday_bound_precise=birthday_bound_precise(bits),
     )
+
+
+# --------------------------------------------------------------------------
+# Known full-digest collisions
+# --------------------------------------------------------------------------
+# The truncated search above is a MODEL of a collision. These are the real
+# thing: two different inputs whose COMPLETE digest is identical. They are not
+# found by brute force — they come from differential cryptanalysis, which is
+# why they exist for MD5 and SHA-1 and not for SHA-256.
+
+@dataclass(frozen=True)
+class KnownCollision:
+    """A published pair of different inputs sharing one complete digest."""
+
+    key: str
+    title: str
+    algorithm: str
+    block_a: bytes
+    block_b: bytes
+    source: str
+    year: int
+
+    def differing_byte_offsets(self) -> List[int]:
+        """Byte positions where the two inputs differ."""
+        return [i for i, (x, y) in enumerate(zip(self.block_a, self.block_b)) if x != y]
+
+
+_WANG_A = bytes.fromhex(
+    "d131dd02c5e6eec4693d9a0698aff95c2fcab58712467eab4004583eb8fb7f89"
+    "55ad340609f4b30283e488832571415a085125e8f7cdc99fd91dbdf280373c5b"
+    "d8823e3156348f5bae6dacd436c919c6dd53e2b487da03fd02396306d248cda0"
+    "e99f33420f577ee8ce54b67080a80d1ec69821bcb6a8839396f9652b6ff72a70"
+)
+_WANG_B = bytes.fromhex(
+    "d131dd02c5e6eec4693d9a0698aff95c2fcab50712467eab4004583eb8fb7f89"
+    "55ad340609f4b30283e4888325f1415a085125e8f7cdc99fd91dbd7280373c5b"
+    "d8823e3156348f5bae6dacd436c919c6dd53e23487da03fd02396306d248cda0"
+    "e99f33420f577ee8ce54b67080280d1ec69821bcb6a8839396f965ab6ff72a70"
+)
+
+KNOWN_COLLISIONS: Dict[str, KnownCollision] = {
+    "md5": KnownCollision(
+        key="md5",
+        title="MD5 full-digest collision",
+        algorithm="md5",
+        block_a=_WANG_A,
+        block_b=_WANG_B,
+        source="X. Wang and H. Yu, 'How to Break MD5 and Other Hash Functions', EUROCRYPT 2005",
+        year=2004,
+    ),
+}
+
+
+def verify_known_collision(key: str = "md5") -> dict:
+    """Recompute a published collision and report what actually matches.
+
+    Nothing here is taken on trust: both inputs are hashed with every supported
+    algorithm at run time, so the result is a measurement rather than a claim.
+
+    Returns:
+        A dictionary describing the pair, the digests under each algorithm, and
+        which of them genuinely collide.
+
+    Raises:
+        InvalidParameterError: If ``key`` names no known collision.
+    """
+    if key not in KNOWN_COLLISIONS:
+        raise InvalidParameterError(
+            "No known collision named {!r}. Available: {}.".format(
+                key, ", ".join(KNOWN_COLLISIONS)
+            )
+        )
+    known = KNOWN_COLLISIONS[key]
+    offsets = known.differing_byte_offsets()
+
+    digests = {}
+    for algorithm in supported_algorithms():
+        info = get_algorithm(algorithm)
+        hex_a = digest_bytes(known.block_a, algorithm).hex()
+        hex_b = digest_bytes(known.block_b, algorithm).hex()
+        digests[info.name] = {
+            "algorithm": info.name,
+            "digest_bits": info.digest_bits,
+            "hash_a": hex_a,
+            "hash_b": hex_b,
+            "collides": hex_a == hex_b,
+        }
+
+    return {
+        "report_type": "known_collision",
+        "key": known.key,
+        "title": known.title,
+        "target_algorithm": get_algorithm(known.algorithm).name,
+        "source": known.source,
+        "year": known.year,
+        "input_a_hex": known.block_a.hex(),
+        "input_b_hex": known.block_b.hex(),
+        "input_bytes": len(known.block_a),
+        "inputs_identical": known.block_a == known.block_b,
+        "differing_bytes": len(offsets),
+        "differing_offsets": offsets,
+        "digests": digests,
+        "is_full_hash_collision": True,
+    }

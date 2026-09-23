@@ -86,12 +86,13 @@ ${B}One-shot commands${R}
   ${C}hashision collision${R} [bits]     collision experiment      (default 16)
   ${C}hashision bench${R} [runs] [bits]  benchmark                 (default 20 runs, 16 bits)
   ${C}hashision avalanche${R} [A] [B]    avalanche test            (default hello/Hello)
+  ${C}hashision known${R}                verify a REAL full MD5 collision
   ${C}hashision algos${R}                algorithm comparison table
   ${C}hashision report${R} [runs]        benchmark -> reports/report.json
 
 ${B}Project${R}
   ${C}hashision install${R}              run the installer
-  ${C}hashision test${R}                 run the 53 unit tests
+  ${C}hashision test${R}                 run the 58 unit tests
   ${C}hashision clean${R}                remove __pycache__ and generated reports
   ${C}hashision raw${R} ...              pass anything straight to hashision.py
 
@@ -107,22 +108,25 @@ case "$cmd" in
 
   demo)
     if [ "${1:-}" = "--auto" ]; then AUTO=1; fi
-    step "1/6  HASHING - a fixed-length fingerprint"
+    step "1/7  HASHING - a fixed-length fingerprint"
     cli hash-text "cybersecurity" --algorithm sha256
     pause
-    step "2/6  AVALANCHE - one input bit changes half the output"
+    step "2/7  AVALANCHE - one input bit changes half the output"
     cli avalanche "cybersecurity" "Cybersecurity" --algorithm sha256
     pause
-    step "3/6  COLLISION - the birthday paradox on a 16-bit truncation"
+    step "3/7  TRUNCATED COLLISION - the birthday paradox on 16 bits"
     cli collision-demo --algorithm sha256 --bits 16
     pause
-    step "4/6  BENCHMARK - theory vs 20 real experiments"
+    step "4/7  BENCHMARK - theory vs 20 real experiments"
     cli benchmark --algorithm sha256 --bits 16 --runs 20 --quiet
     pause
-    step "5/6  ALGORITHMS - what is broken and what is not"
+    step "5/7  REAL COLLISION - one identical MD5, two different inputs"
+    cli known-collision
+    pause
+    step "6/7  ALGORITHMS - what is broken and what is not"
     cli algorithms
     pause
-    step "6/6  TESTS - 53 automated checks"
+    step "7/7  TESTS - 58 automated checks"
     ( cd "$PRO" && "$PY" -m unittest discover -s tests -q )
     printf '\n%s[+] Demonstration complete.%s\n' "$G" "$R"
     ;;
@@ -138,6 +142,7 @@ case "$cmd" in
   collision)  cli collision-demo ${2:+"$2"} --bits "${1:-16}" ;;
   bench)      cli benchmark ${3:+"$3"} --bits "${2:-16}" --runs "${1:-20}" ;;
   avalanche)  cli avalanche "${1:-hello}" "${2:-Hello}" ${3:+"$3"} ;;
+  known)      cli known-collision "$@" ;;
   algos)      cli algorithms ;;
 
   report)

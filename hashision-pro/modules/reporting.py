@@ -39,6 +39,7 @@ __all__ = [
     "render_avalanche",
     "render_algorithms",
     "render_file_comparison",
+    "render_known_collision",
     "TRUNCATION_DISCLAIMER",
     "ReportError",
     "supported_formats",
@@ -621,3 +622,50 @@ def _strip_colour(text: str) -> str:
         result.append(char)
         index += 1
     return "".join(result)
+
+
+def render_known_collision(payload: Dict[str, Any]) -> str:
+    """Render the result of :func:`modules.collision.verify_known_collision`."""
+    out: List[str] = [banner("KNOWN FULL-DIGEST COLLISION"), ""]
+    out.append("Target algorithm: {}".format(payload["target_algorithm"]))
+    out.append("Source: {} ({})".format(payload["source"], payload["year"]))
+    out.append("")
+
+    for label, key in (("Input A", "input_a_hex"), ("Input B", "input_b_hex")):
+        hex_str = payload[key]
+        wrapped = "\n".join(hex_str[i : i + 64] for i in range(0, len(hex_str), 64))
+        out.append(field_block("{} ({} bytes)".format(label, payload["input_bytes"]), wrapped))
+
+    out.append(
+        field_block(
+            "Inputs",
+            "DIFFERENT - {} of {} bytes differ, at offsets {}".format(
+                payload["differing_bytes"],
+                payload["input_bytes"],
+                ", ".join(str(o) for o in payload["differing_offsets"]),
+            ),
+        )
+    )
+
+    out.append(section("DIGESTS OF BOTH INPUTS"))
+    for entry in payload["digests"].values():
+        out.append("")
+        out.append(_c("{}  ({} bits)".format(entry["algorithm"], entry["digest_bits"]), Palette.BOLD))
+        out.append("  A: {}".format(entry["hash_a"]))
+        out.append("  B: {}".format(entry["hash_b"]))
+        if entry["collides"]:
+            out.append("  " + _c(">>> IDENTICAL - a real, complete collision", Palette.RED))
+        else:
+            out.append("  " + _c("    different", Palette.GREEN))
+
+    out.append(
+        note(
+            "This is a GENUINE collision: two different inputs with the same\n"
+            "complete {} digest, every character, same length.\n\n"
+            "It was not found by brute force. It comes from differential\n"
+            "cryptanalysis, which is why such pairs exist for MD5 and SHA-1 and\n"
+            "not for SHA-256 or SHA-512 - as the digests above show for the very\n"
+            "same two inputs.".format(payload["target_algorithm"])
+        )
+    )
+    return "\n".join(out)

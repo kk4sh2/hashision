@@ -6,10 +6,18 @@ birthday paradox and the avalanche effect.
 
 Scope and honesty statement
 ---------------------------
-Collision experiments are run against a deliberately TRUNCATED digest (8-32
-bits). The complete MD5/SHA-1/SHA-256/SHA-512 digests of the two inputs remain
-different, and the tool says so on every report. Nothing here breaks a real
-hash function, and the tool never generates malicious colliding files.
+The tool shows collisions two ways, and is explicit about which is which.
+
+1. `collision-demo` and `benchmark` SEARCH for collisions, but only in a
+   deliberately TRUNCATED digest (8-32 bits). The complete digests of the two
+   inputs stay different, and every report says so.
+2. `known-collision` VERIFIES a published full-digest MD5 collision: two
+   different inputs whose complete 128-bit digest is identical. That pair was
+   produced by other researchers through differential cryptanalysis; this tool
+   re-hashes it rather than finding it.
+
+So the tool breaks no hash function itself, and it never generates malicious
+colliding files.
 
 Examples:
     python3 hashision.py hash-text "hello" md5
@@ -19,6 +27,7 @@ Examples:
     python3 hashision.py collision-demo sha256 --bits 16
     python3 hashision.py benchmark sha256 --bits 16 --runs 20
     python3 hashision.py avalanche "hello" "Hello" sha256
+    python3 hashision.py known-collision
     python3 hashision.py algorithms
     python3 hashision.py interactive
 """
@@ -40,6 +49,7 @@ from modules.collision import (
     DEFAULT_MAX_ATTEMPTS,
     birthday_bound,
     find_collision,
+    verify_known_collision,
 )
 from modules.file_hasher import (
     FileHashResult,
@@ -393,6 +403,41 @@ def cmd_avalanche(args: argparse.Namespace) -> int:
 
     payload = result.to_dict()
     payload["date"] = _timestamp()
+    _save(payload, args.output, args.format, rendered)
+    return 0
+
+
+def cmd_known_collision(args: argparse.Namespace) -> int:
+    """Verify a published pair of inputs sharing one complete digest.
+
+    Unlike ``collision-demo``, which collides a deliberately shortened digest,
+    this is a real full-length collision: the two inputs differ, and every
+    character of the MD5 digest is the same.
+    """
+    payload = verify_known_collision(args.which)
+    payload["date"] = _timestamp()
+
+    rendered = reporting.render_known_collision(payload)
+    print(rendered)
+
+    if args.write_files:
+        target = os.path.abspath(os.path.expanduser(args.write_files))
+        os.makedirs(target, exist_ok=True)
+        written = []
+        for suffix, hex_data in (("a", payload["input_a_hex"]), ("b", payload["input_b_hex"])):
+            path = os.path.join(target, "md5-collision-{}.bin".format(suffix))
+            with open(path, "wb") as handle:
+                handle.write(bytes.fromhex(hex_data))
+            written.append(path)
+        print()
+        for path in written:
+            print(reporting.success("Wrote {}".format(path)))
+        print(
+            reporting.info(
+                "Check them with: hashision.py compare-files {} {} md5".format(*written)
+            )
+        )
+
     _save(payload, args.output, args.format, rendered)
     return 0
 
@@ -904,6 +949,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_output_options(p_aval)
     p_aval.set_defaults(func=cmd_avalanche)
+
+    # -- known-collision -------------------------------------------------
+    p_known = subparsers.add_parser(
+        "known-collision",
+        help="Verify a published full-digest collision (a real one, not truncated).",
+        parents=[common],
+    )
+    p_known.add_argument(
+        "which",
+        nargs="?",
+        choices=["md5"],
+        default="md5",
+        help="Which published collision to verify (default: %(default)s).",
+    )
+    p_known.add_argument(
+        "--write-files",
+        metavar="DIR",
+        help="Also write the two colliding inputs into DIR as .bin files.",
+    )
+    _add_output_options(p_known)
+    p_known.set_defaults(func=cmd_known_collision)
 
     # -- algorithms ------------------------------------------------------
     p_algos = subparsers.add_parser(

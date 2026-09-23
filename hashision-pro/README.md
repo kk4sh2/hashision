@@ -64,7 +64,7 @@ collision pair supplied to it (`compare-files`), which is a read-only check.
 | Avalanche | Changed-bit count, percentage, deviation from the ideal 50 %, optional bit map |
 | Reports | JSON, CSV and TXT export from every command |
 | Interfaces | Full argparse CLI plus a menu-driven interactive mode |
-| Engineering | Type hints, docstrings, dataclasses, 53 unit tests, installer, zero dependencies |
+| Engineering | Type hints, docstrings, dataclasses, 58 unit tests, installer, zero dependencies |
 | Safety | `--max-attempts`, run caps, truncation cap, clean error messages, no tracebacks |
 
 ---
@@ -87,7 +87,7 @@ hashision-pro/
 ├── reports/                       generated reports land here
 ├── samples/                       sample files for the file commands
 ├── tests/
-│   └── test_hashision.py          53 unit tests
+│   └── test_hashision.py          58 unit tests
 │
 ├── install.sh
 ├── requirements.txt
@@ -619,7 +619,7 @@ python3 tests/test_hashision.py
 ```
 
 ```
-Ran 53 tests in 0.110s
+Ran 58 tests in 0.110s
 
 OK
 ```
@@ -737,7 +737,7 @@ python3 hashision.py algorithms
 python3 -m unittest discover -s tests -q
 ```
 
-> "53 unit tests: known-answer digests, the truncation mathematics including
+> "58 unit tests: known-answer digests, the truncation mathematics including
 > the tricky non-multiple-of-4 case, the birthday formulas, the file error
 > paths, every CLI subcommand — and a test that asserts the two full digests
 > in a collision result are always different, so the tool can never overstate

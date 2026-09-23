@@ -16,21 +16,54 @@ self-contained HTML page.
 
 ---
 
-## ⚠ Honesty statement
+## Two kinds of collision, clearly separated
 
-Neither tool **breaks a real hash function.**
+The project shows collisions **two different ways**, and never confuses them.
 
-Every collision experiment runs against a **deliberately truncated digest**
-(8–32 bits). The two colliding inputs share only the first *n* bits of the
-digest; their complete MD5 / SHA-1 / SHA-256 / SHA-512 hashes remain different,
-and both print and verify that fact on every result.
+### 1. A real, complete collision — verified
+
+```bash
+hashision known
+```
+
+Two **different** 128-byte inputs whose **entire** MD5 digest is identical —
+every one of the 32 characters, same length:
+
+```
+MD5     A: 79054025255fb1a26e4bc422aef54eb4
+MD5     B: 79054025255fb1a26e4bc422aef54eb4   <<< IDENTICAL
+
+SHA-256 A: 8d12236e5c4ed9f4e790db4d868fd5c399df267e18ff65c1107c328228cffc98
+SHA-256 B: b9fef2a8fc93b05e7701e97196fda6c4fbeea25ff8e64fdfee7015eca8fa617d
+```
+
+This is the published Wang & Yu pair (EUROCRYPT 2005). The tool **re-hashes it
+at run time** rather than taking it on trust — and the same two inputs leave
+SHA-1, SHA-256 and SHA-512 completely unaffected, which is the clearest possible
+demonstration of why MD5 is dead and SHA-256 is not.
+
+The pair was produced by *differential cryptanalysis*, by other researchers.
+This tool verifies it; it does not find it.
+
+### 2. A searched collision — in a deliberately truncated digest
+
+```bash
+hashision collision 16
+```
+
+Brute force cannot find a full collision on ordinary hardware, so the search
+shortens the digest to 8–24 bits first. The two inputs then share only the
+leading *n* bits, and their complete digests stay different. Every report says
+so:
 
 * ❌ Wrong: "I found a SHA-256 collision."
 * ✅ Right: "I found a collision in a **16-bit truncation** of SHA-256."
 
-Neither creates malicious colliding executables, certificates, authentication
-tokens or signed documents. The command-line tool can *verify* a known harmless
-collision pair supplied to it, which is a read-only check.
+### What the project never does
+
+It does not break any hash function itself, and it creates no malicious
+colliding executables, certificates, authentication tokens or signed
+documents.
 
 ---
 
@@ -41,12 +74,12 @@ collision pair supplied to it, which is a read-only check.
 | Folder | [`hashision-pro/`](hashision-pro/) | [`hashision-web/`](hashision-web/) |
 | Entry point | `hashision.py` | `index.html` |
 | Size | 7 modules + CLI, ~2,700 lines | 1 file, ~830 lines |
-| Interface | 9-subcommand CLI **+** interactive menu | Browser |
+| Interface | 10-subcommand CLI **+** interactive menu | Browser |
 | Algorithms | MD5, SHA-1, SHA-256, SHA-512 | MD5, SHA-1, SHA-256, SHA-512 |
 | Files | Chunked hashing, file comparison | — |
 | Statistics | min / max / average / median / stdev + theory ratio | Attempts vs birthday bound |
 | Reports | JSON, CSV, TXT | — |
-| Tests | 53 unit tests | 9 MD5 test vectors verified |
+| Tests | 58 unit tests | 9 MD5 test vectors verified |
 | Best for | The project demo and the portfolio | Showing someone, live |
 
 Both implement the **same** core experiment: generate random strings,
@@ -130,18 +163,19 @@ sudo ln -s "$PWD/hashision" /usr/local/bin/hashision
 
 | Command | Does |
 |---------|------|
-| `hashision demo` | The full teacher demonstration — six steps, paused between each so you can talk. `--auto` removes the pauses |
+| `hashision demo` | The full teacher demonstration — seven steps, paused between each so you can talk. `--auto` removes the pauses |
 | `hashision collision 16` | Collision experiment at 16 bits |
 | `hashision bench 20` | 20-run benchmark |
 | `hashision avalanche` | Avalanche on `hello` / `Hello` |
 | `hashision hash "text"` | Hash some text |
 | `hashision file PATH` | Hash a file |
 | `hashision compare A B` | Compare two texts |
+| `hashision known` | Verify the real, full MD5 collision |
 | `hashision algos` | Algorithm comparison table |
 | `hashision report 20` | Benchmark straight to a timestamped JSON report |
 | `hashision web` | Serve the dashboard on <http://localhost:8000> |
 | `hashision menu` | The interactive menu |
-| `hashision install` / `hashision test` | Run the installer / the 53 unit tests |
+| `hashision install` / `hashision test` | Run the installer / the 58 unit tests |
 | `hashision clean` | Remove `__pycache__` and generated reports |
 | `hashision raw ...` | Pass anything straight through to `hashision.py` |
 
@@ -160,6 +194,7 @@ python3 hashision.py compare-files file1.txt file2.txt sha256
 python3 hashision.py collision-demo sha256 --bits 16
 python3 hashision.py benchmark sha256 --bits 16 --runs 20
 python3 hashision.py avalanche "hello" "Hello" sha256
+python3 hashision.py known-collision
 python3 hashision.py algorithms
 python3 hashision.py interactive
 ```
@@ -268,7 +303,7 @@ python3 -m unittest discover -s tests -v
 ```
 
 ```
-Ran 53 tests in 0.110s
+Ran 58 tests in 0.110s
 
 OK
 ```
